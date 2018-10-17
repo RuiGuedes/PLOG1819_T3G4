@@ -16,15 +16,14 @@ board([ ['#', '#', '#', '#', '#', '#', '#', '#', '#','#', '#', '#', '#', '#', '#
 		['#', '#', '#', '#', '#', '#', '#', '#', '#','#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
 		['#', '#', '#', '#', '#', '#', '#', '#', '#','#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
 		['#', '#', '#', '#', '#', '#', '#', '#', '#','#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#','#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
 		['#', '#', '#', '#', '#', '#', '#', '#', '#','#', '#', '#', '#', '#', '#', '#', '#', '#', '#']
 	  ]).
 
 getPiece(LinNo, ColNo, Board, Piece):-	getLine(LinNo, Board, Line), 
 									   	getColumn(Line, ColNo, Piece).
 
-getLine(0, [Line|_], Line).
-getLine(LinNo, [_|RestBoard], Line):- 	LinNo > 0, 
+getLine(1, [Line|_], Line).
+getLine(LinNo, [_|RestBoard], Line):- 	LinNo > 1, 
 									  	PrevLineNo is LinNo - 1, 
 									  	getLine(PrevLineNo, RestBoard, Line).
 
@@ -44,13 +43,13 @@ setColumn(ColNo, Piece, [H|T], [H|R]) :-	ColNo > 1,
 											setColumn(PrevColNo, Piece, T, R).
 
 							
-setLine(0, [_|T], [NewLine|T], NewLine).					
-setLine(LinNo, [H|T], [H|R], NewLine) :-	LinNo > 0,
+setLine(1, [_|T], [NewLine|T], NewLine).					
+setLine(LinNo, [H|T], [H|R], NewLine) :-	LinNo > 1,
 											PrevLinNo is LinNo - 1,
 											setLine(PrevLinNo, T, R, NewLine).
 
-displayGame(Board):- format("~n", []), displayGame(Board, 0).
-displayGame([H], LineNumber):-displayLine(H, LineNumber), format("   A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S~n~n", []).												
+displayGame(Board):- format("~n", []), displayGame(Board, 1).
+displayGame([H], LineNumber):-displayLine(H, LineNumber), format("~n   A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S~n~n", []).												
 displayGame([H|T], LineNumber):-	displayLine(H, LineNumber),
 									displaySepLine,
 									NextLineNumber is LineNumber + 1,
