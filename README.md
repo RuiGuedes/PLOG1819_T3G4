@@ -4,11 +4,11 @@ Project for the Logic Programming (PLOG) class of the Master in Informatics and 
 
 ## Team Members 
 
-Rui Jorge Leão Guedes <br>
+Rui Jorge Leão Guedes
 * Student Number: 201603854
 * E-Mail: up201603854@fe.up.pt
 
-João Fernando da Costa Meireles Barbosa <br>
+João Fernando da Costa Meireles Barbosa
 * Student Number: 201604156
 * E-Mail: up201604156@fe.up.pt
 
@@ -32,7 +32,12 @@ During the game there's a single event that changes the state of the board, othe
 
 **TODO Insert picture illustrating when it's considered a capture or not and a multiple capture**
 
-There are two winning conditions in Pente. A player wins when they either perform...
+There are two winning conditions in Pente. A player wins when they either perform five captures (capture 10 opponent stones) or when they place at least five stones of their color in a row along any direction (Horizontal, Vertical, Diagonal).
+
+**TODO Insert picture representing an example of a final state where a player wins.
+
+#### Game State Representation
+The game state can be represented by the displacement of stones in the board. Throughout the game
 
 #### References
 [Wikipedia - Pente](https://en.wikipedia.org/wiki/Pente)
