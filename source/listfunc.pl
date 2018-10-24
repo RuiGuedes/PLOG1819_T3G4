@@ -3,26 +3,34 @@
 % Auxiliary Predicates: getLine(), getColumn(), setLine() and setColumn()
 %
 % Initial State of Board:
-board([ ['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#'],
-		['#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#']
+board([ ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
 	  ]).
+
+% Column identifiers
+columnSymb(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']).
+
+% Symbol converter
+converteSymb('0','+').
+converteSymb('1','O').
+converteSymb('2','X').
 
 % Retrieves a Piece of a given board.
 
@@ -58,14 +66,94 @@ setLine(19, [_|T], [NewLine|T], NewLine).
 setLine(LinNo, [H|T], [H|R], NewLine) :-	LinNo < 19,
 											PrevLinNo is LinNo + 1,
 											setLine(PrevLinNo, T, R, NewLine).
-
-displayGame(Board):- format("~n   A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S~n~n", []), displayGame(Board, 19).
-displayGame([H], LineNumber):-displayLine(H, LineNumber), format("~n   A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S~n~n", []).												
+											
+											
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Begin - DISPLAY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+											
+displayGame(Board):- length(Board, Size), displayColSymb(Size), displayGame(Board, Size), displayColSymb(Size), displayPlayerInfo.
+displayGame([H], LineNumber):-	displayLine(H, LineNumber).												
 displayGame([H|T], LineNumber):-	displayLine(H, LineNumber),
 									displaySepLine,
 									NextLineNumber is LineNumber - 1,
 									displayGame(T, NextLineNumber).	
 
-displaySepLine:- format("   |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |~n", []).
-displayLine(BoardLine, LineNumber):- LineNumber < 10, format(" ~p ", [LineNumber]) ,format("~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p", BoardLine), format(" ~p~n", [LineNumber]).
-displayLine(BoardLine, LineNumber):- LineNumber > 9, format("~p ", [LineNumber]) ,format("~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p--~p", BoardLine), format(" ~p~n", [LineNumber]). 
+									
+displayColSymb(Size):-	columnSymb(List), write('\n   '),  displayColSymb(List, Size), write('\n\n').									
+displayColSymb([H|_], 1):- put_char(H).
+displayColSymb([H|T], Size):-	put_char(H), 
+								write('  '), 
+								NextSize is Size - 1,
+								displayColSymb(T, NextSize).
+
+								
+displaySepLine:- board(Board), length(Board, Size), write('   '), displaySepLine(Size).
+displaySepLine(1):- write('|\n').
+displaySepLine(Size):- 	write('|  '),
+						NextSize is Size - 1,
+						displaySepLine(NextSize).
+
+
+displayRow([H|[]]):- 	converteSymb(H,Symb), 
+						put_char(Symb).
+displayRow([H|T]):- 	converteSymb(H,Symb), 
+						put_char(Symb),
+						write('--'), 
+						displayRow(T).						
+
+displayLine(BoardLine, LineNumber):- 	LineNumber < 10,
+										format(" ~p ", [LineNumber]),
+										displayRow(BoardLine),
+										format(" ~p~n", [LineNumber]).
+displayLine(BoardLine, LineNumber):- 	LineNumber > 9, 
+										format("~p ", [LineNumber]),
+										displayRow(BoardLine),
+										format(" ~p~n", [LineNumber]). 
+										
+displayPlayerInfo:- format('   Player One -> ~p Captures    ', [5]), %change captures
+					format('   Player Two -> ~p Captures~n~n', [4]).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% End - DISPLAY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%										
+
+
+startGame:- board(Board), gameStep(Board, 'playerOne').
+
+gameStep(Board, Player):- 	displayGame(Board), 
+							handleInput(Board, Player, Line, Column),
+							updateBoard(Player, Line, Column, Board, NewBoard), 
+							switchPlayer(Player, NewPlayer),
+							% Predicate responsible to manage game state (capture or winning condition)
+							gameStep(NewBoard, NewPlayer).
+
+switchPlayer('playerOne', 'playerTwo').
+switchPlayer('playerTwo', 'playerOne').
+
+% More info to be added
+
+% Struct info: player - player symbol
+player('playerOne', '1').  
+player('playerTwo', '2').
+
+% Handle input 
+handleInput(Board, Player, Line, Column):- 	userInput(Player, Line, Column),
+											getPiece(Line, Column, Board, Piece),
+											validateUserInput(Board, Player, Line, Column, Piece).
+
+% Retrieves player input
+userInput(Player, X, Y):-	player(Player, Num), converteSymb(Num, Symb),
+							format('-> Player ~p [~p] turn:~n~n', [Num, Symb]), 	
+							write('   Line: '), read(X),
+							write('   Column: '), read(Y). 
+
+% Validates user input
+validateUserInput(_, _, _, _, '0').
+validateUserInput(Board, Player, X, Y, Piece):-	converteSymb(Piece, Symb),
+												format('~n   Invalid move. Chosen cell is occupied with [~p]~n~n', [Symb]), !,
+												handleInput(Board, Player, X, Y).
+						
+% Updates board Status
+updateBoard(Player, Line, Column, Board, NewBoard):-	player(Player, Piece),
+														setPiece(Line, Column, Board, NewBoard, Piece).
