@@ -1,4 +1,4 @@
-% ----BOARD MANIPULATION----
+% ---- BOARD MANIPULATION ----
 % API: getPiece() and setPiece()
 % Auxiliary Predicates: getLine(), getColumn(), setLine() and setColumn()
 %
@@ -24,49 +24,87 @@ board([ ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '
 		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
 	  ]).
 
-% Column identifiers
-columnSymb(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']).
-
 % Symbol converter
-convertSymb('0','+').
-convertSymb('1','O').
-convertSymb('2','X').
+modelToView('0','+').
+modelToView('1','O').
+modelToView('2','X').
 
-% Retrieves a Piece of a given board.
+% Retrieves a Cell from a given board.
 
-%	+LinNo: Row number for the piece to be retrieved.
-%  	+ColNo: Row number for the piece to be retrieved.
+%	+LinNo: Row number for the cell to be retrieved.
+%  	+ColNo: Row number for the cell to be retrieved.
 %	+Board: Internal Representation of the board.
-%	-Piece: Piece retrieved from the board
-getPiece(LinNo, ColNo, Board, Piece):-	getLine(LinNo, Board, Line), 
-									   	getColumn(Line, ColNo, Piece).
+%	-Piece: Cell value retrieved from the board
+getPiece(LinNo, ColNo, Board, Piece):-	
+	getLine(LinNo, Board, Line), 
+	getColumn(ColNo, Line, Piece).
 
-getLine(19, [Line|_], Line).
-getLine(LinNo, [_|RestBoard], Line):- 	LinNo < 19, 
-									  	PrevLineNo is LinNo + 1, 
-									  	getLine(PrevLineNo, RestBoard, Line).
+% Retrieves a Line from a given board.
 
-getColumn([Piece|_], 1, Piece).
-getColumn([_|RestLine], ColNo, Piece):-	ColNo > 1, 
-										PrevColNo is ColNo - 1, 
-										getColumn(RestLine, PrevColNo, Piece). 
-											
+%	+LinNo: Number of the line to be retrieved.
+%	+Board: Internal Representation of the board.
+%	-Line: 	Line retrieved from the board
+getLine(LinNo, Board, Line):-
+	length(Board, MaxLines),
+	getLine(LinNo, MaxLines, Board, Line).
+	
+getLine(MaxLines, MaxLines, [Line|_], Line).
+getLine(LinNo, MaxLines, [_|RestBoard], Line):-
+	NextLineNo is LinNo + 1, 
+	getLine(NextLineNo, MaxLines, RestBoard, Line).
 
-setPiece(LinNo, ColNo, OldBoard, NewBoard, Piece):-	getLine(LinNo, OldBoard, OldLine), 
-													setColumn(ColNo, Piece, OldLine, NewLine),
-													setLine(LinNo, OldBoard, NewBoard, NewLine).
+% Retrieves a cell from a given line.
 
+%	+ColNo: Number of the cell to be retrieved.
+%	+Line: 	List containing the elements of the line.
+%	-Piece: Cell value to be retrieved from the line
+getColumn(1, [Piece|_], Piece).
+getColumn(ColNo, [_|RestLine], Piece):-	
+	ColNo > 1, 
+	PrevColNo is ColNo - 1, 
+	getColumn(PrevColNo, RestLine, Piece). 
+
+	
+% Sets a cell on a board.
+
+%	+LinNo: 	Row number for the cell to be edited.
+%  	+ColNo: 	Row number for the cell to be edited.
+%	+OldBoard: 	Internal Representation of the board before being edited.
+%	-NewBoard: 	Internal Representation of the board after being edited.
+%	+Piece: 	Cell value to be attributed.
+setPiece(LinNo, ColNo, OldBoard, NewBoard, Piece):-	
+	getLine(LinNo, OldBoard, OldLine), 
+	setColumn(ColNo, Piece, OldLine, NewLine),
+	setLine(LinNo, NewLine, OldBoard, NewBoard).
+	
+% Edits a cell from a given line.
+
+%	+ColNo: 	Number of the cell to be edited.
+%	+Piece: 	Cell value to be attributed.
+%	+OldLine: 	List containing the elements of the line before being edited.
+%	-NewLine: 	List containing the elements of the line after being edited.
 setColumn(1, Piece, [_|T], [Piece|T]).
-setColumn(ColNo, Piece, [H|T], [H|R]) :-	ColNo > 1, 
-											PrevColNo is ColNo - 1,
-											setColumn(PrevColNo, Piece, T, R).
-
+setColumn(ColNo, Piece, [H|T], [H|R]) :-	
+	ColNo > 1, 
+	PrevColNo is ColNo - 1,
+	setColumn(PrevColNo, Piece, T, R).
 							
-setLine(19, [_|T], [NewLine|T], NewLine).					
-setLine(LinNo, [H|T], [H|R], NewLine) :-	LinNo < 19,
-											PrevLinNo is LinNo + 1,
-											setLine(PrevLinNo, T, R, NewLine).
-											
+% Edits a line from a given board.
+
+%	+LinNo: 	Number of the line to be replaced.
+%	+Line: 		Line to be attributed to the board.
+%	+OldBoard: 	Internal Representation of the board before being edited.
+%	-NewBoard: 	Internal Representation of the board after being edited.
+
+setLine(LinNo, Line, OldBoard, NewBoard) :-
+	length(OldBoard, MaxLines),
+	setLine(LinNo, MaxLines, Line, OldBoard, NewBoard).
+	
+setLine(MaxLines, MaxLines, NewLine, [_|T], [NewLine|T]).					
+setLine(LinNo, MaxLines, NewLine, [H|Told], [H|Tnew]) :-	
+	LinNo < MaxLines,
+	PrevLinNo is LinNo + 1,
+	setLine(PrevLinNo, MaxLines, NewLine, Told, Tnew).										
 											
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Begin - DISPLAY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -95,9 +133,9 @@ displaySepLine(Size):- 	write('|  '),
 						displaySepLine(NextSize).
 
 
-displayRow([H|[]]):- 	convertSymb(H,Symb), 
+displayRow([H|[]]):- 	modelToView(H,Symb), 
 						put_char(Symb).
-displayRow([H|T]):- 	convertSymb(H,Symb), 
+displayRow([H|T]):- 	modelToView(H,Symb), 
 						put_char(Symb),
 						write('--'), 
 						displayRow(T).						
@@ -118,6 +156,8 @@ displayPlayerInfo:- format('   Player One -> [~p] Captures    ', 5), %change cap
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% End - DISPLAY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%										
 
+% Column identifiers
+columnSymb(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']).
 
 startGame:- board(Board), gameStep(Board, 'playerOne').
 
@@ -144,7 +184,7 @@ handleInput(Board, Player, Line, Column):-	format('~n   Invalid move. Chosen cel
 											handleInput(Board, Player, Line, Column).
 
 % Retrieves player input
-userInput(Player, X, Y):-	player(Player, Num), convertSymb(Num, Symb),
+userInput(Player, X, Y):-	player(Player, Num), modelToView(Num, Symb),
 							format('-> Player ~p [~p] turn:~n~n', [Num, Symb]), 	
 							write('   Line: '), read(X),
 							write('   Column: '), read(Y).
