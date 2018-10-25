@@ -28,9 +28,9 @@ board([ ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '
 columnSymb(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']).
 
 % Symbol converter
-converteSymb('0','+').
-converteSymb('1','O').
-converteSymb('2','X').
+convertSymb('0','+').
+convertSymb('1','O').
+convertSymb('2','X').
 
 % Retrieves a Piece of a given board.
 
@@ -95,9 +95,9 @@ displaySepLine(Size):- 	write('|  '),
 						displaySepLine(NextSize).
 
 
-displayRow([H|[]]):- 	converteSymb(H,Symb), 
+displayRow([H|[]]):- 	convertSymb(H,Symb), 
 						put_char(Symb).
-displayRow([H|T]):- 	converteSymb(H,Symb), 
+displayRow([H|T]):- 	convertSymb(H,Symb), 
 						put_char(Symb),
 						write('--'), 
 						displayRow(T).						
@@ -111,8 +111,8 @@ displayLine(BoardLine, LineNumber):- 	LineNumber > 9,
 										displayRow(BoardLine),
 										format(" ~p~n", [LineNumber]). 
 										
-displayPlayerInfo:- format('   Player One -> ~p Captures    ', [5]), %change captures
-					format('   Player Two -> ~p Captures~n~n', [4]).
+displayPlayerInfo:- format('   Player One -> [~p] Captures    ', 5), %change captures
+					format('   Player Two -> [~p] Captures~n~n', 4).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% End - DISPLAY %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -139,20 +139,19 @@ player('playerTwo', '2').
 
 % Handle input 
 handleInput(Board, Player, Line, Column):- 	userInput(Player, Line, Column),
-											getPiece(Line, Column, Board, Piece),
-											validateUserInput(Board, Player, Line, Column, Piece).
+											validateUserInput(Board, Line, Column).
+handleInput(Board, Player, Line, Column):-	format('~n   Invalid move. Chosen cell is either invalid or occupied~n~n', []),
+											handleInput(Board, Player, Line, Column).
 
 % Retrieves player input
-userInput(Player, X, Y):-	player(Player, Num), converteSymb(Num, Symb),
+userInput(Player, X, Y):-	player(Player, Num), convertSymb(Num, Symb),
 							format('-> Player ~p [~p] turn:~n~n', [Num, Symb]), 	
 							write('   Line: '), read(X),
-							write('   Column: '), read(Y). 
+							write('   Column: '), read(Y).
 
 % Validates user input
-validateUserInput(_, _, _, _, '0').
-validateUserInput(Board, Player, X, Y, Piece):-	converteSymb(Piece, Symb),
-												format('~n   Invalid move. Chosen cell is occupied with [~p]~n~n', [Symb]), !,
-												handleInput(Board, Player, X, Y).
+validateUserInput(Board, X, Y):-	getPiece(X, Y, Board, Piece),
+									Piece = '0'.
 						
 % Updates board Status
 updateBoard(Player, Line, Column, Board, NewBoard):-	player(Player, Piece),
