@@ -5,6 +5,10 @@
 % Initial State of Board:
 board([ ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
 		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '1', '0', '0', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '1', '0', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '1', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
 		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
 		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
 		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
@@ -13,14 +17,10 @@ board([ ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '
 		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
 		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
 		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0', '1', '0', '0', '0', '0'],
+		['0', '0', '0', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '1', '0', '0', '0'],
+		['0', '0', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '1', '0', '0'],
+		['0', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '1', '1', '1', '1', '0'],
 		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
 	  ]).
 
@@ -164,8 +164,8 @@ startGame:- board(Board), gameStep(Board, 'playerOne').
 gameStep(Board, Player):- 	displayGame(Board), 
 							handleInput(Board, Player, Line, Column),
 							updateBoard(Player, Line, Column, Board, NewBoard), 
-							switchPlayer(Player, NewPlayer),
-							% Predicate responsible to manage game state (capture or winning condition)
+							switchPlayer(Player, NewPlayer), !,
+							updateGameState(Player, Line, Column, NewBoard),
 							gameStep(NewBoard, NewPlayer).
 
 switchPlayer('playerOne', 'playerTwo').
@@ -196,3 +196,194 @@ validateUserInput(Board, X, Y):-	getPiece(X, Y, Board, Piece),
 % Updates board Status
 updateBoard(Player, Line, Column, Board, NewBoard):-	player(Player, Piece),
 														setPiece(Line, Column, Board, NewBoard, Piece).
+
+														
+% Updates game state
+
+% First checks victory by sequence: 5 pieces in sequence 
+% After checks possible capture														
+updateGameState(Player, Line, Column, NewBoard):- victoryBySequence(Player, Line, Column, NewBoard).
+
+% Checks possible victory on:
+
+% - horizontal direction
+victoryBySequence(Player, Line, Column, Board):-	Column =< 4, Iterator is 5 - Column, horizontalVictory(Player, Line, 1, Board, Iterator), !.
+victoryBySequence(Player, Line, Column, Board):-	Column > 4, Column =< 15, NewColumn is Column - 4, horizontalVictory(Player, Line, NewColumn, Board, 0), !.
+victoryBySequence(Player, Line, Column, Board):-	Column > 15, NewColumn is Column - 4, horizontalVictory(Player, Line, NewColumn, Board, 4), !.
+
+% - vertical direction
+victoryBySequence(Player, Line, Column, Board):-	Line =< 4, Iterator is 0 - Line + 5, verticalVictory(Player, 1, Column, Board, Iterator), !.
+victoryBySequence(Player, Line, Column, Board):-	Line > 4, Line =< 15, NewLine is Line - 4, verticalVictory(Player, NewLine, Column, Board, 0), !.	
+victoryBySequence(Player, Line, Column, Board):-	Line > 15, NewLine is Line - 4, verticalVictory(Player, NewLine, Column, Board, 4), !.	
+
+% - negative diagonal direction
+victoryBySequence(Player, Line, Column, Board):-	Column =< 15, Line =< 4, write('A\n'),
+													NewColumn is Column + Line - 1,
+													Iterator is 5 - Line,
+													negativeDiagonalVictory(Player, 1, NewColumn, Board, Iterator), !.
+victoryBySequence(Player, Line, Column, Board):-	Column =< 15, Line > 4, write('B\n'),
+													NewColumn is Column + 4,
+													NewLine is Line - 4,
+													negativeDiagonalVictory(Player, NewLine, NewColumn, Board, 0), !.
+victoryBySequence(Player, Line, Column, Board):-	Column > 15, Line =< 4, write('C\n'),
+													NewColumn is Column + Line - 1, % Esta mal
+													Iterator is 5 - Line,
+													negativeDiagonalVictory(Player, 1, NewColumn, Board, Iterator), !.
+victoryBySequence(Player, Line, Column, Board):-	Column > 15, Line > 4, write('D\n'),
+													NewLine is Line - 19 + Column, 
+													Iterator is 19 - Column + 1,
+													negativeDiagonalVictory(Player, NewLine, 19, Board, Iterator), !.
+
+% - positive diagonal direction
+%victoryBySequence(Player, Line, Column, Board):-	Line =< 4, Column > 4, 
+%													NewColumn is Column - Line + 1,
+%													Iterator is 5 - Line, 
+%													positiveDiagonalVictory(Player, 1, NewColumn, Board, Iterator), !.
+%victoryBySequence(Player, Line, Column, Board):-	Line =< 4, Column =< 4, Line >= Column, write('B\n'),
+%													NewLine is Line - Column + 1,
+%													Iterator is 5 - Line,
+%													positiveDiagonalVictory(Player, NewLine, 1, Board, Iterator), !.
+%victoryBySequence(Player, Line, Column, Board):-	Line =< 4, Column =< 4, Line < Column, 
+%													NewColumn is Column - Line,
+%													Iterator is 5 - Line,
+%													positiveDiagonalVictory(Player, 1, NewColumn, Board, Iterator), !.													
+%victoryBySequence(Player, Line, Column, Board):-	Line > 4, Column =< 4,
+%													NewLine is Line - Column + 1,
+%													Iterator is 5 - Column,
+%													positiveDiagonalVictory(Player, NewLine, 1, Board, Iterator), !.
+%victoryBySequence(Player, Line, Column, Board):-	Line > 4, Column > 4,
+%													NewLine is Line - 4, 
+%													NewColumn is Column - 4,
+%													positiveDiagonalVictory(Player, NewLine, NewColumn, Board, 0), !.													
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%  Horizontal Victory %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+horizontalVictory(_, _, _, _, 5):- !, fail.
+horizontalVictory(Player, Line, Column, Board, Iterator):-	retrievePieces('horizontal', 0, Line, Column, Board, _, Pieces), !,
+															validateHorizontalVictory(Player, Line, Column, Board, Iterator, Pieces, 0).
+
+															
+validateHorizontalVictory(_, _, _, _, _, [], 5):- write('winner hori\n').											
+validateHorizontalVictory(Player, Line, Column, Board, Iterator, [H|T], NumPieces):-	player(Player, Symb),
+																						Symb = H, !,
+																						NewNumPieces is NumPieces + 1,
+																						validateHorizontalVictory(Player,Line, Column, Board, Iterator, T, NewNumPieces), !.
+validateHorizontalVictory(Player, Line, Column, Board, Iterator, _, _):- 	NewColumn is Column + 1,
+																			NewIterator is Iterator + 1,
+																			horizontalVictory(Player, Line, NewColumn, Board, NewIterator), !.																	
+
+																		
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%  Vertical Victory  %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%												
+														
+verticalVictory(_, _, _, _, 5):- !, fail.
+verticalVictory(Player, Line, Column, Board, Iterator):-	retrievePieces('vertical', 0, Line, Column, Board, _, Pieces), !,
+															validateVerticalVictory(Player, Line, Column, Board, Iterator, Pieces, 0).																													
+																	
+validateVerticalVictory(_, _, _, _, _, [], 5):- write('winner vert\n').											
+validateVerticalVictory(Player, Line, Column, Board, Iterator, [H|T], NumPieces):-	player(Player, Symb),
+																					Symb = H, !,
+																					NewNumPieces is NumPieces + 1,
+																					validateVerticalVictory(Player,Line, Column, Board, Iterator, T, NewNumPieces), !.
+validateVerticalVictory(Player, Line, Column, Board, Iterator, _, _):- 	NewLine is Line + 1,
+																			NewIterator is Iterator + 1,
+																			verticalVictory(Player, NewLine, Column, Board, NewIterator).	
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%  Negative Diagonal Victory  %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+negativeDiagonalVictory(_, _, _, _, 5):- !, write('failed\n'), fail.
+negativeDiagonalVictory(Player, Line, Column, Board, Iterator):-	retrievePiecesSetIndex('negativeDiagonal', Line, Column, Board, Pieces), !, printP(Pieces),
+																	validateNegativeDiagonalVictory(Player, Line, Column, Board, Iterator, Pieces, 0), !.																													
+																	
+validateNegativeDiagonalVictory(_, _, _, _, _, [], 5):- write('winner neg diag\n').											
+validateNegativeDiagonalVictory(Player, Line, Column, Board, Iterator, [H|T], NumPieces):-	player(Player, Symb),
+																							Symb = H, !,
+																							NewNumPieces is NumPieces + 1,
+																							validateNegativeDiagonalVictory(Player,Line, Column, Board, Iterator, T, NewNumPieces), !.
+validateNegativeDiagonalVictory(Player, Line, Column, Board, Iterator, _, _):- 	NewLine is Line + 1,
+																				NewColumn is Column - 1,
+																				NewIterator is Iterator + 1,
+																				negativeDiagonalVictory(Player, NewLine, NewColumn, Board, NewIterator), !.
+
+																					
+retrievePiecesSetIndex('negativeDiagonal', Line, Column, Board, NewPieces):-	Column < 5, !, 
+																				Iterator is 5 - Column,
+																				retrievePieces('negativeDiagonal', Iterator, Line, Column, Board, _, NewPieces), !.
+retrievePiecesSetIndex('negativeDiagonal', Line, Column, Board, NewPieces):-	Column >= 5, !,
+																				retrievePieces('negativeDiagonal', 0, Line, Column, Board, _, NewPieces), !.																						
+																					
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%  Positive Diagonal Victory  %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+positiveDiagonalVictory(_, _, _, _, 5).
+positiveDiagonalVictory(Player, Line, Column, Board, Iterator):-	retrievePiecesSetIndex('positiveDiagonal', Line, Column, Board, Pieces), !,
+																	validatePositiveDiagonalVictory(Player, Line, Column, Board, Iterator, Pieces, 0).																													
+																	
+validatePositiveDiagonalVictory(_, _, _, _, _, [], 5):- write('winner pos diag\n').											
+validatePositiveDiagonalVictory(Player, Line, Column, Board, Iterator, [H|T], NumPieces):-	player(Player, Symb),
+																							Symb = H, !,
+																							NewNumPieces is NumPieces + 1,
+																							validatePositiveDiagonalVictory(Player,Line, Column, Board, Iterator, T, NewNumPieces), !.
+validatePositiveDiagonalVictory(Player, Line, Column, Board, Iterator, _, _):- 	NewLine is Line + 1,
+																				NewColumn is Column - 1,
+																				NewIterator is Iterator + 1,
+																				positiveDiagonalVictory(Player, NewLine, NewColumn, Board, NewIterator).
+
+																					
+retrievePiecesSetIndex('positiveDiagonal', Line, Column, Board, NewPieces):-	Column > 5, !, 
+																				Iterator is 19 - Column,
+																				retrievePieces('positiveDiagonal', Iterator, Line, Column, Board, _, NewPieces), !.
+retrievePiecesSetIndex('positiveDiagonal', Line, Column, Board, NewPieces):-	retrievePieces('positiveDiagonal', 0, Line, Column, Board, _, NewPieces), !.	
+
+													
+													
+% Retrieves a list of 5 pieces in the direction provided  of a certain piece	
+
+% Pieces on horizontal direction																		
+retrievePieces('horizontal', 4, Line, Column, Board, OldPieces, NewPieces):-	getPiece(Line, Column, Board, Piece),
+																				append([Piece], OldPieces, NewPieces).
+retrievePieces('horizontal', Iterator, Line, Column, Board, OldPieces, NewPieces):- 	getPiece(Line, Column, Board, Piece),
+																						append([Piece], OldPieces, Pieces),
+																						NewColumn is Column + 1,
+																						NewIterator is Iterator + 1,	
+																						retrievePieces('horizontal', NewIterator, Line, NewColumn, Board, Pieces, NewPieces).
+
+% Pieces on vertical direction
+retrievePieces('vertical', 4, Line, Column, Board, OldPieces, NewPieces):-	getPiece(Line, Column, Board, Piece),
+																			append([Piece], OldPieces, NewPieces).
+retrievePieces('vertical', Iterator, Line, Column, Board, OldPieces, NewPieces):- 	getPiece(Line, Column, Board, Piece),
+																					append([Piece], OldPieces, Pieces),
+																					NewLine is Line + 1,
+																					NewIterator is Iterator + 1,	
+																					retrievePieces('vertical', NewIterator, NewLine, Column, Board, Pieces, NewPieces).	
+
+% Pieces on negative diagonal direction																						
+retrievePieces('negativeDiagonal', 4, Line, Column, Board, OldPieces, NewPieces):-	getPiece(Line, Column, Board, Piece),
+																					append([Piece], OldPieces, NewPieces).																							
+retrievePieces('negativeDiagonal', Iterator, Line, Column, Board, OldPieces, NewPieces):- 	getPiece(Line, Column, Board, Piece),
+																							append([Piece], OldPieces, Pieces),
+																							NewLine is Line + 1,
+																							NewColumn is Column - 1,
+																							NewIterator is Iterator + 1,
+																							retrievePieces('negativeDiagonal', NewIterator, NewLine, NewColumn, Board, Pieces, NewPieces).		
+																							
+% Pieces on positive diagonal direction																						
+retrievePieces('positiveDiagonal', 4, Line, Column, Board, OldPieces, NewPieces):-	getPiece(Line, Column, Board, Piece),
+																					append([Piece], OldPieces, NewPieces).																							
+retrievePieces('positiveDiagonal', Iterator, Line, Column, Board, OldPieces, NewPieces):- 	getPiece(Line, Column, Board, Piece),
+																							append([Piece], OldPieces, Pieces),
+																							NewLine is Line + 1,
+																							NewColumn is Column + 1,
+																							NewIterator is Iterator + 1,
+																							retrievePieces('negativeDiagonal', NewIterator, NewLine, NewColumn, Board, Pieces, NewPieces).																							
+																							
+																							
+																							
+printP([]):- write('\n').
+printP([H|T]):- write(H), write(' - '), printP(T).																							
