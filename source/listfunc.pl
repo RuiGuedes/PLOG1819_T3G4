@@ -170,9 +170,11 @@ gameStep(Board, Player):- 	displayGame(Board),
 							handleInput(Board, Player, Line, Column),
 							updateBoard(Player, Line, Column, Board, NewBoard), 
 							switchPlayer(Player, NewPlayer), !,
-							updateGameState(Player, Line, Column, NewBoard),
-							gameStep(NewBoard, NewPlayer).
+							gameTransitionState(Player, NewPlayer, Line, Column, NewBoard).
 
+gameTransitionState(Player, _, Line, Column, NewBoard):- updateGameState(Player, Line, Column, NewBoard).
+gameTransitionState(_, NewPlayer, _, _, NewBoard):- gameStep(NewBoard, NewPlayer).							
+							
 endGame(_, _):- !, write('End game !\n').							
 							
 switchPlayer('playerOne', 'playerTwo').
@@ -205,11 +207,7 @@ updateBoard(Player, Line, Column, Board, NewBoard):-	player(Player, Piece),
 														setPiece(Line, Column, Board, NewBoard, Piece).
 
 														
-% Updates game state
-updateState('step', 'end').
-
-% First checks victory by sequence: 5 pieces in sequence 
-% After checks possible capture														
+% Updates game state													
 updateGameState(Player, Line, Column, Board):- victoryBySequence(Player, Line, Column, Board).
 
 % Checks possible victory on:
@@ -240,7 +238,7 @@ horizontalVictory(Player, Line, Column, Board, Iterator):-	retrievePieces('horiz
 															validateHorizontalVictory(Player, Line, Column, Board, Iterator, Pieces, 0).
 
 															
-validateHorizontalVictory(Player, _, _, Board, _, [], 5):- endGame(Board, Player).											
+validateHorizontalVictory(_, _, _, _, _, [], 5).											
 validateHorizontalVictory(Player, Line, Column, Board, Iterator, [H|T], NumPieces):-	player(Player, Symb),
 																						Symb = H, !,
 																						NewNumPieces is NumPieces + 1,
@@ -258,7 +256,7 @@ verticalVictory(_, _, _, _, 5):- !, fail.
 verticalVictory(Player, Line, Column, Board, Iterator):-	retrievePieces('vertical', 0, Line, Column, Board, _, Pieces), !, 
 															validateVerticalVictory(Player, Line, Column, Board, Iterator, Pieces, 0).																													
 																	
-validateVerticalVictory(Player, _, _, Board, _, [], 5):- endGame(Board, Player).											
+validateVerticalVictory(_, _, _, _, _, [], 5).											
 validateVerticalVictory(Player, Line, Column, Board, Iterator, [H|T], NumPieces):-	player(Player, Symb),
 																					Symb = H, !,
 																					NewNumPieces is NumPieces + 1,
@@ -275,7 +273,7 @@ negativeDiagonalVictory(_, _, _, _, 5):- !, fail.
 negativeDiagonalVictory(Player, Line, Column, Board, Iterator):-	retrievePieces('negativeDiagonal', 0, Line, Column, Board, _, Pieces), !,
 																	validateNegativeDiagonalVictory(Player, Line, Column, Board, Iterator, Pieces, 0).																													
 																	
-validateNegativeDiagonalVictory(Player, _, _, Board, _, [], 5):- endGame(Board, Player).											
+validateNegativeDiagonalVictory(_, _, _, _, _, [], 5).											
 validateNegativeDiagonalVictory(Player, Line, Column, Board, Iterator, [H|T], NumPieces):-	player(Player, Symb),
 																							Symb = H, !,
 																							NewNumPieces is NumPieces + 1,
@@ -289,11 +287,11 @@ validateNegativeDiagonalVictory(Player, Line, Column, Board, Iterator, _, _):- 	
 %%%  Positive Diagonal Victory  %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-positiveDiagonalVictory(_, _, _, _, 5).
+positiveDiagonalVictory(_, _, _, _, 5):- !, fail.
 positiveDiagonalVictory(Player, Line, Column, Board, Iterator):-	retrievePieces('positiveDiagonal', 0, Line, Column, Board, _, Pieces), !,
 																	validatePositiveDiagonalVictory(Player, Line, Column, Board, Iterator, Pieces, 0).																													
 																	
-validatePositiveDiagonalVictory(Player, _, _, Board, _, [], 5):- endGame(Board, Player).											
+validatePositiveDiagonalVictory(_, _, _, _, _, [], 5).											
 validatePositiveDiagonalVictory(Player, Line, Column, Board, Iterator, [H|T], NumPieces):-	player(Player, Symb),
 																							Symb = H, !,
 																							NewNumPieces is NumPieces + 1,
@@ -343,8 +341,4 @@ retrievePieces('positiveDiagonal', Iterator, Line, Column, Board, OldPieces, New
 																							NewColumn is Column + 1,
 																							NewIterator is Iterator + 1,
 																							retrievePieces('positiveDiagonal', NewIterator, NewLine, NewColumn, Board, Pieces, NewPieces).																							
-																							
-																							
-% IGNORE 																							
-printP([]):- write('\n').
-printP([H|T]):- write(H), write(' - '), printP(T).																							
+																																														
