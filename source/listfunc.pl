@@ -15,13 +15,13 @@ board([ ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '
 		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
 		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
 		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['1', '0', '0', '1', '0', '0', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '2', '0', '2', '0', '2', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '2', '2', '2', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['1', '2', '2', '0', '2', '2', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '2', '2', '2', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '2', '0', '2', '0', '2', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['1', '0', '0', '1', '0', '0', '1', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
 	  ]).
 
 % Symbol converter
@@ -171,7 +171,7 @@ endGame(Board, Num):- 	displayGame(Board),
 						modelToView(Num, Symb),
 						format('-> Victory: Player ~p was won the game by having a sequence of five <~p> pieces !~n~n', [Num, Symb]).
 endGame(Board, Num, Captures):- displayGame(Board),
-								format('-> Victory: Player ~p was won the game by making ~p captures !~n~n', [Num, Captures]).																													
+								format('-> Victory: Player ~p was won the game by making 10 or more captures [~p] !~n~n', [Num, Captures]).																													
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -179,12 +179,13 @@ endGame(Board, Num, Captures):- displayGame(Board),
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 startGame:- board(Board), 
-			player('playerOne', P1_Num, _),
+			player('playerOne', P1_Num, _), 
 			player('playerTwo', P2_Num, _),
 			gameStep(Board, player('playerOne', P1_Num, 0), player('playerTwo', P2_Num, 0)).		
 			
 gameStep(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt)):- 	displayGame(Board),	displayPlayerInfo(CurrPlayer, Curr_Capt, Next_Capt),
-																										handleInput(Board, CurrPlayer, Line, Column),
+																										boardEmptyCells(Board, 0, EmptyCells), 
+																										handleInput(Board, CurrPlayer, Line, Column, EmptyCells),
 																										updateBoard(CurrPlayer, Line, Column, Board, NewBoard), !,											
 																										gameTransitionState(player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt), Line, Column, NewBoard).
 
@@ -207,22 +208,37 @@ checkPlayerCaptures(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextP
 %% Handle input %%
 %%%%%%%%%%%%%%%%%%
 
-handleInput(Board, Player, Line, Column):- 	userInput(Player, Line, Column),
-											validateUserInput(Board, Line, Column).
-handleInput(Board, Player, Line, Column):-	format('~n   Invalid move. Chosen cell is either invalid or occupied~n~n', []),
-											handleInput(Board, Player, Line, Column).
+handleInput(Board, Player, Line, Column, EmptyCells):- 	userInput(Player, Line, Column),
+														validateUserInput(Board, Line, Column, EmptyCells).
+handleInput(Board, Player, Line, Column, EmptyCells):-	EmptyCells = 361, 
+														format('~n   Invalid move. First move must be at the center of the board.~n~n', []),
+														handleInput(Board, Player, Line, Column, EmptyCells).
+handleInput(Board, Player, Line, Column, EmptyCells):-	format('~n   Invalid move. Chosen cell is either invalid or occupied.~n~n', []),
+														handleInput(Board, Player, Line, Column, EmptyCells).
 
 % Retrieves player input
 userInput(Player, X, Y):-	player(Player, Num), modelToView(Num, Symb),
 							format('-> Player ~p [~p] turn:~n~n', [Num, Symb]), 	
 							write('   Line: '), read(X),
-							write('   Column: '), read(Y).
+							write('   Column: '), read(Y), !.
 
 % Validates user input
-validateUserInput(Board, X, Y):-	getPiece(X, Y, Board, Piece),
-									Piece = '0'.
+validateUserInput(Board, X, Y, 361):-	X = 10, Y = 10,
+										getPiece(X, Y, Board, Piece),
+										Piece = '0'.
+validateUserInput(Board, X, Y, EmptyCells):-	EmptyCells \= 361,
+												getPiece(X, Y, Board, Piece),
+												Piece = '0'.
 
-														
+% Determines how many cells still empty
+boardEmptyCells([], Iterator, EmptyCells):- EmptyCells is Iterator.
+boardEmptyCells([H|T], Iterator, EmptyCells):-  lineEmptyCells(H, 0, LineEmptyCells), NewIterator is Iterator + LineEmptyCells, boardEmptyCells(T, NewIterator, EmptyCells).
+
+lineEmptyCells([], Iterator, EmptyCells):- EmptyCells is Iterator.
+lineEmptyCells([H|T], Iterator, EmptyCells):- H = '0', NewIterator is Iterator + 1, lineEmptyCells(T, NewIterator, EmptyCells).
+lineEmptyCells([_|T], Iterator, EmptyCells):- lineEmptyCells(T, Iterator, EmptyCells). 
+				
+				
 %%%%%%%%%%%%%%%%%%%%%%%%														
 %% Updates game state %%
 %%%%%%%%%%%%%%%%%%%%%%%%
