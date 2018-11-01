@@ -172,13 +172,14 @@ endGame(Board, Num):- 	displayGame(Board),
 						format('-> Victory: Player ~p was won the game by having a sequence of five <~p> pieces !~n~n', [Num, Symb]).
 endGame(Board, Num, Captures):- displayGame(Board),
 								format('-> Victory: Player ~p was won the game by making 10 or more captures [~p] !~n~n', [Num, Captures]).																													
-
+endGame(Board):- 	displayGame(Board),
+					format('-> Draw: No more cells are available !~n~n', []).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Game State Transactions %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-startGame:- board(Board), 
+startGame:- board(Board),
 			player('playerOne', P1_Num, _), 
 			player('playerTwo', P2_Num, _),
 			gameStep(Board, player('playerOne', P1_Num, 0), player('playerTwo', P2_Num, 0)).		
@@ -201,8 +202,13 @@ gameTransitionState(player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, 
 																																checkPlayerCaptures(NewBoard, player(NewPlayer, New_Num, New_Num_Capt), player(NextPlayer, Next_Num, Next_Capt)).
 % After 10 captures the current player is considered the winner
 checkPlayerCaptures(Board, player(_, Curr_Num, Curr_Capt), _):- Curr_Capt >= 10, !,  endGame(Board, Curr_Num, Curr_Capt).
-checkPlayerCaptures(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt)):- Curr_Capt < 10, !, gameStep(Board, player(NextPlayer, Next_Num, Next_Capt), player(CurrPlayer, Curr_Num, Curr_Capt)).							
-			
+checkPlayerCaptures(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt)):- 	Curr_Capt < 10, 
+																												boardEmptyCells(Board, 0, EmptyCells), 
+																												checkDraw(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt), EmptyCells).
+																												
+																		
+checkDraw(Board, player(_, _, _), player(_, _, _), 0):- endGame(Board).								
+checkDraw(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt), _):- gameStep(Board, player(NextPlayer, Next_Num, Next_Capt), player(CurrPlayer, Curr_Num, Curr_Capt)).																
 
 %%%%%%%%%%%%%%%%%%
 %% Handle input %%
@@ -231,7 +237,7 @@ validateUserInput(Board, X, Y, EmptyCells):-	EmptyCells \= 361,
 												Piece = '0'.
 
 % Determines how many cells still empty
-boardEmptyCells([], Iterator, EmptyCells):- EmptyCells is Iterator.
+boardEmptyCells([], Iterator, EmptyCells):-  EmptyCells is Iterator.
 boardEmptyCells([H|T], Iterator, EmptyCells):-  lineEmptyCells(H, 0, LineEmptyCells), NewIterator is Iterator + LineEmptyCells, boardEmptyCells(T, NewIterator, EmptyCells).
 
 lineEmptyCells([], Iterator, EmptyCells):- EmptyCells is Iterator.
