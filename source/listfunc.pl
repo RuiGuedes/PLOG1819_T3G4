@@ -112,7 +112,7 @@ setLine(LinNo, MaxLines, NewLine, [H|Told], [H|Tnew]) :-	LinNo < MaxLines,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Game Display %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% API: displayGame/1, displayPlayerInfo/3
+% API: displayGame/1, displayPlayerInfo/0
 % Auxiliary Predicates: displayColSymb/1, displayLine/2, displayRow/1, displaySepLine/1
 
 
@@ -186,32 +186,59 @@ dispSepLine(Size):- 	write('|  '),
 						
 
 % Displays information about each players' number of captures 						
-displayPlayerCaptInfo('playerOne', P1, P2):- 	format('   Player One -> [~p] Captures    ', P1), 
-												format('   Player Two -> [~p] Captures~n~n', P2).
-displayPlayerCaptInfo('playerTwo', P2, P1):- 	format('   Player One -> [~p] Captures    ', P1), 
-												format('   Player Two -> [~p] Captures~n~n', P2).
+displayPlayerCaptInfo:- player('playerOne', _, P1Captures),
+						player('playerTwo', _, P2Captures),
+						format('   Player One -> [~p] Captures    ', P1Captures), 
+						format('   Player Two -> [~p] Captures~n~n', P2Captures).
 											
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Game State Transactions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Game State Transitions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Game Initial State:		startGame/0
+% Game End
+% Game State Transtion:		gameStep/3
+% Board State Transition: 	boardStep/5
 
-endGame(Board, Num):- 	displayGame(Board),
-						modelToView(Num, Symb),
-						format('-> Victory: Player ~p was won the game by having a sequence of five <~p> pieces !~n~n', [Num, Symb]).
-endGame(Board, Num, Captures):- displayGame(Board),
-								format('-> Victory: Player ~p was won the game by making 10 or more captures [~p] !~n~n', [Num, Captures]).																													
-endGame(Board):- 	displayGame(Board),
-					format('-> Draw: No more cells are available !~n~n', []).
-
+% Initializes the game in its initial state (Empty Board)
 startGame:- board(Board),
 			gameStep(Board, player('playerOne', P1_Num, 0), player('playerTwo', P2_Num, 0)).		
-			
-gameStep(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt)):- 	displayGame(Board),	displayPlayerCaptInfo(CurrPlayer, Curr_Capt, Next_Capt),
-																										boardEmptyCells(Board, 0, EmptyCells), 
-																										handleInput(Board, CurrPlayer, Line, Column, EmptyCells),
-																										updateBoard(CurrPlayer, Line, Column, Board, NewBoard), !,											
-																										gameTransitionState(player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt), Line, Column, NewBoard).
 
+			
+% Ends the game depending on its final state (Win by Pieces in a row, Win by captures, Draw)			
+endGame(Board, Num):- 	displayGame(Board),
+						modelToView(Num, Symb),
+						format('-> Victory: Player ~p was won the game by having five <~p> pieces in a row!~n~n', [Num, Symb]).
+						
+endGame(Board, Num, Captures):- displayGame(Board),
+								format('-> Victory: Player ~p was won the game by making 10 or more captures [~p] !~n~n', [Num, Captures]).																													
+								
+endGame(Board):- 	displayGame(Board),
+					format('-> Draw: No more cells available !~n~n', []).
+
+
+% Handles the transition between two game states.
+
+% +Board: 		Internal Representation of the Board in its current state.
+% +CurrPlayer:	Internal Representation of the Player going to play this turn
+% +NextPlayer:	Internal Representation of this turn's player opponent.
+gameStep(Board, CurrPlayer, NextPlayer):- 	displayGame(Board),	
+											displayPlayerCaptInfo(),
+											boardEmptyCells(Board, 0, EmptyCells), 
+											handleInput(Board, CurrPlayer, Line, Column, EmptyCells),
+											boardStep(Board, Line, Column, _Score).
+											% updateBoard(CurrPlayer, Line, Column, Board, NewBoard), !,											
+											% gameTransitionState(player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt), Line, Column, NewBoard).
+
+
+% Handles the transition between two board states.
+
+% +Board:		Internal Representation of the Board in its current state.
+% +CurrPlayer:	Internal Representation of the Player going to play this turn.
+% +SetLine:		Line of the cell where the player is playing his piece.
+% +SetColumn:	Column of the cell where the player is playing his piece.
+% -Score:		Score of the resulting board state (Used to evaluate AI movements).
+boardStep(Board, CurrPlayer, SetLine, SetColumn, Score).
+											
 % Updates board Status
 updateBoard(Player, Line, Column, Board, NewBoard):-	player(Player, Piece, _),
 														setPiece(Line, Column, Board, NewBoard, Piece).
