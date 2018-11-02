@@ -230,18 +230,16 @@ gameStep(Board, CurrPlayer, NextPlayer):- 	displayGame(Board),
 											% gameTransitionState(player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt), Line, Column, NewBoard).
 
 
-% Handles the transition between two board states.
+% Handles the transition between two board states. 
+% This including updating the board and checking its current status in respect to the game
 
 % +Board:		Internal Representation of the Board in its current state.
 % +CurrPlayer:	Internal Representation of the Player going to play this turn.
 % +SetLine:		Line of the cell where the player is playing his piece.
 % +SetColumn:	Column of the cell where the player is playing his piece.
 % -Score:		Score of the resulting board state (Used to evaluate AI movements).
-boardStep(Board, CurrPlayer, SetLine, SetColumn, Score).
-											
-% Updates board Status
-updateBoard(Player, Line, Column, Board, NewBoard):-	player(Player, Piece, _),
-														setPiece(Line, Column, Board, NewBoard, Piece).
+boardStep(Board, player(_, Piece, CaptureNo), SetLine, SetColumn, Score) :- setPiece(SetLine, SetColumn, Board, NewBoard, Piece).
+																			% Do victory and capture analysis here.
 
 														
 % Check possible game state transations: Victory or Captures																										
