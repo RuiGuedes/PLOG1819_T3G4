@@ -1,7 +1,10 @@
-% ---- BOARD MANIPULATION ----
-% API: getPiece() and setPiece()
-% Auxiliary Predicates: getLine(), getColumn(), setLine() and setColumn()
-%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Board Manipulation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% API: getPiece/4 and setPiece/5
+% Auxiliary Predicates: getLine/3, getColumn/3, setLine/4 and setColumn/4
+
+
 % Initial State of Board:
 board([ ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
 		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
@@ -30,9 +33,6 @@ modelToView('1','O').
 modelToView('2','X').
 modelToView('3','#').
 
-% Column identifiers
-columnSymb(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']).
-
 % Struct info: player - player symbol - number of captures
 player('playerOne', '1', _).  
 player('playerTwo', '2', _).
@@ -43,27 +43,24 @@ player('playerTwo', '2', _).
 %  	+ColNo: Row number for the cell to be retrieved.
 %	+Board: Internal Representation of the board.
 %	-Piece: Cell value retrieved from the board
-getPiece(LinNo, ColNo, Board, Piece):- 
-	LinNo >= 1, LinNo =< 19,
-	ColNo >= 1, ColNo =< 19,
-	getLine(LinNo, Board, Line), 
-	getColumn(ColNo, Line, Piece).
+getPiece(LinNo, ColNo, Board, Piece):-	LinNo >= 1, LinNo =< 19,
+										ColNo >= 1, ColNo =< 19,
+										getLine(LinNo, Board, Line), 
+										getColumn(ColNo, Line, Piece).
 	
-getPiece(_, _, _, Piece):- modelToView(Piece, '#').
+getPiece(_, _, _, Piece):- 				modelToView(Piece, '#').
 
 % Retrieves a Line from a given board.
 
 %	+LinNo: Number of the line to be retrieved.
 %	+Board: Internal Representation of the board.
 %	-Line: 	Line retrieved from the board
-getLine(LinNo, Board, Line):-
-	length(Board, MaxLines),
-	getLine(LinNo, MaxLines, Board, Line).
+getLine(LinNo, Board, Line):-	length(Board, MaxLines),
+								getLine(LinNo, MaxLines, Board, Line).
 	
 getLine(MaxLines, MaxLines, [Line|_], Line).
-getLine(LinNo, MaxLines, [_|RestBoard], Line):-
-	NextLineNo is LinNo + 1, 
-	getLine(NextLineNo, MaxLines, RestBoard, Line).
+getLine(LinNo, MaxLines, [_|RestBoard], Line):-	NextLineNo is LinNo + 1, 
+												getLine(NextLineNo, MaxLines, RestBoard, Line).
 
 % Retrieves a cell from a given line.
 
@@ -71,12 +68,10 @@ getLine(LinNo, MaxLines, [_|RestBoard], Line):-
 %	+Line: 	List containing the elements of the line.
 %	-Piece: Cell value to be retrieved from the line
 getColumn(1, [Piece|_], Piece).
-getColumn(ColNo, [_|RestLine], Piece):-	
-	ColNo > 1, 
-	PrevColNo is ColNo - 1, 
-	getColumn(PrevColNo, RestLine, Piece). 
+getColumn(ColNo, [_|RestLine], Piece):-	ColNo > 1, 
+										PrevColNo is ColNo - 1, 
+										getColumn(PrevColNo, RestLine, Piece). 
 
-	
 % Sets a cell on a board.
 
 %	+LinNo: 	Row number for the cell to be edited.
@@ -84,10 +79,9 @@ getColumn(ColNo, [_|RestLine], Piece):-
 %	+OldBoard: 	Internal Representation of the board before being edited.
 %	-NewBoard: 	Internal Representation of the board after being edited.
 %	+Piece: 	Cell value to be attributed.
-setPiece(LinNo, ColNo, OldBoard, NewBoard, Piece):-	
-	getLine(LinNo, OldBoard, OldLine), 
-	setColumn(ColNo, Piece, OldLine, NewLine),
-	setLine(LinNo, NewLine, OldBoard, NewBoard).
+setPiece(LinNo, ColNo, OldBoard, NewBoard, Piece):-	getLine(LinNo, OldBoard, OldLine), 
+													setColumn(ColNo, Piece, OldLine, NewLine),
+													setLine(LinNo, NewLine, OldBoard, NewBoard).
 	
 % Edits a cell from a given line.
 
@@ -96,10 +90,9 @@ setPiece(LinNo, ColNo, OldBoard, NewBoard, Piece):-
 %	+OldLine: 	List containing the elements of the line before being edited.
 %	-NewLine: 	List containing the elements of the line after being edited.
 setColumn(1, Piece, [_|T], [Piece|T]).
-setColumn(ColNo, Piece, [H|T], [H|R]) :-	
-	ColNo > 1, 
-	PrevColNo is ColNo - 1,
-	setColumn(PrevColNo, Piece, T, R).
+setColumn(ColNo, Piece, [H|T], [H|R]) :-	ColNo > 1, 
+											PrevColNo is ColNo - 1,
+											setColumn(PrevColNo, Piece, T, R).
 							
 % Edits a line from a given board.
 
@@ -107,65 +100,100 @@ setColumn(ColNo, Piece, [H|T], [H|R]) :-
 %	+Line: 		Line to be attributed to the board.
 %	+OldBoard: 	Internal Representation of the board before being edited.
 %	-NewBoard: 	Internal Representation of the board after being edited.
-
-setLine(LinNo, Line, OldBoard, NewBoard) :-
-	length(OldBoard, MaxLines),
-	setLine(LinNo, MaxLines, Line, OldBoard, NewBoard).
+setLine(LinNo, Line, OldBoard, NewBoard) :-	length(OldBoard, MaxLines),
+											setLine(LinNo, MaxLines, Line, OldBoard, NewBoard).
 	
 setLine(MaxLines, MaxLines, NewLine, [_|T], [NewLine|T]).					
-setLine(LinNo, MaxLines, NewLine, [H|Told], [H|Tnew]) :-	
-	LinNo < MaxLines,
-	PrevLinNo is LinNo + 1,
-	setLine(PrevLinNo, MaxLines, NewLine, Told, Tnew).										
-											
+setLine(LinNo, MaxLines, NewLine, [H|Told], [H|Tnew]) :-	LinNo < MaxLines,
+															PrevLinNo is LinNo + 1,
+															setLine(PrevLinNo, MaxLines, NewLine, Told, Tnew).										
+
+															
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Game Display %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-											
-displayGame(Board):- length(Board, Size), displayColSymb(Size), displayGame(Board, Size), displayColSymb(Size).
-displayGame([H], LineNumber):-	displayLine(H, LineNumber).												
-displayGame([H|T], LineNumber):-	displayLine(H, LineNumber),
-									displaySepLine,
-									NextLineNumber is LineNumber - 1,
-									displayGame(T, NextLineNumber).	
-
-									
-displayColSymb(Size):-	columnSymb(List), write('\n   '),  displayColSymb(List, Size), write('\n\n').									
-displayColSymb([H|_], 1):- put_char(H).
-displayColSymb([H|T], Size):-	put_char(H), 
-								write('  '), 
-								NextSize is Size - 1,
-								displayColSymb(T, NextSize).
-
-								
-displaySepLine:- board(Board), length(Board, Size), write('   '), displaySepLine(Size).
-displaySepLine(1):- write('|\n').
-displaySepLine(Size):- 	write('|  '),
-						NextSize is Size - 1,
-						displaySepLine(NextSize).
+% API: displayGame/1, displayPlayerInfo/3
+% Auxiliary Predicates: displayColSymb/1, displayLine/2, displayRow/1, displaySepLine/1
 
 
+% Displays the game board in a user friendly format.
+% The board must be rectangular.
+
+% +Board: Internal Representation of the board to be displayed.								
+displayGame(Board):-	Board = [FirstLine | _],
+						length(Board, LineSize),
+						length(FirstLine, ColSize),
+						displayColSymb(ColSize),
+						displayGame(Board, LineSize, ColSize),
+						displayColSymb(ColSize).
+	
+displayGame([H], LineNumber, _):-			displayLine(H, LineNumber).											
+displayGame([H|T], LineNumber, ColSize):-	displayLine(H, LineNumber),
+											displaySepLine(ColSize),
+											NextLineNumber is LineNumber - 1,
+											displayGame(T, NextLineNumber).
+
+
+% Displays a Row containing the identifiers of the collumns, allowing the player to easily identify cells
+
+% +Size: Number of columns in the board to be displayed.
+displayColSymb(Size):-	char_code('A', CharCode),
+						write('\n   '), 
+						displayColSymb(Size, 1, CharCode), 
+						write('\n\n').
+						
+displayColSymb(Size, Size, CharCode):-	put_code(CharCode).
+displayColSymb(Size, ColNo, CharCode):-	put_code(CharCode),
+										write('  '),
+										IncColNo is ColNo + 1,
+										IncCharCode is CharCode + 1,
+										displayColSymb(Size, IncColNo, IncCharCode).
+
+										
+% Display a Row of the board with its identifier, allowing the player to easily identify cells
+
+% +BoardLine:	List representation of the Line to be displayed
+% +LineNumber:	Number of the Line to be displayed
+displayLine(BoardLine, LineNumber):- 	LineNumber < 10,
+										format(" ~p ", [LineNumber]),
+										displayRow(BoardLine),
+										format(" ~p~n", [LineNumber]).
+displayLine(BoardLine, LineNumber):- 	format("~p ", [LineNumber]),
+										displayRow(BoardLine),
+										format(" ~p~n", [LineNumber]).
+
+% Display a Row of the board
+
+% +BoardLine: List representation of the Line to be displayed
 displayRow([H|[]]):- 	modelToView(H,Symb), 
 						put_char(Symb).
 displayRow([H|T]):- 	modelToView(H,Symb), 
 						put_char(Symb),
 						write('--'), 
-						displayRow(T).						
+						displayRow(T).										
 
-displayLine(BoardLine, LineNumber):- 	LineNumber < 10,
-										format(" ~p ", [LineNumber]),
-										displayRow(BoardLine),
-										format(" ~p~n", [LineNumber]).
-displayLine(BoardLine, LineNumber):- 	LineNumber > 9, 
-										format("~p ", [LineNumber]),
-										displayRow(BoardLine),
-										format(" ~p~n", [LineNumber]). 
-										
-displayPlayerInfo('playerOne', P1, P2):- 	format('   Player One -> [~p] Captures    ', P1), 
-											format('   Player Two -> [~p] Captures~n~n', P2).
-displayPlayerInfo('playerTwo', P2, P1):- 	format('   Player One -> [~p] Captures    ', P1), 
-											format('   Player Two -> [~p] Captures~n~n', P2).
+						
+% Displays a Line of characters between two different rows, providing a better visual experience
+
+% +Size - Number of columns in the board to be displayed
+displaySepLine(Size):- 	write('   '), 
+						dispSepLine(Size).
+
+dispSepLine(1):- 		write('|\n').
+dispSepLine(Size):- 	write('|  '),
+						DecSize is Size - 1,
+						displaySepLine(DecSize).	
+						
+
+% Displays information about each players' number of captures 						
+displayPlayerCaptInfo('playerOne', P1, P2):- 	format('   Player One -> [~p] Captures    ', P1), 
+												format('   Player Two -> [~p] Captures~n~n', P2).
+displayPlayerCaptInfo('playerTwo', P2, P1):- 	format('   Player One -> [~p] Captures    ', P1), 
+												format('   Player Two -> [~p] Captures~n~n', P2).
 											
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Game State Transactions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 endGame(Board, Num):- 	displayGame(Board),
 						modelToView(Num, Symb),
@@ -175,23 +203,17 @@ endGame(Board, Num, Captures):- displayGame(Board),
 endGame(Board):- 	displayGame(Board),
 					format('-> Draw: No more cells are available !~n~n', []).
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Game State Transactions %%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 startGame:- board(Board),
-			player('playerOne', P1_Num, _), 
-			player('playerTwo', P2_Num, _),
 			gameStep(Board, player('playerOne', P1_Num, 0), player('playerTwo', P2_Num, 0)).		
 			
-gameStep(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt)):- 	displayGame(Board),	displayPlayerInfo(CurrPlayer, Curr_Capt, Next_Capt),
+gameStep(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt)):- 	displayGame(Board),	displayPlayerCaptInfo(CurrPlayer, Curr_Capt, Next_Capt),
 																										boardEmptyCells(Board, 0, EmptyCells), 
 																										handleInput(Board, CurrPlayer, Line, Column, EmptyCells),
 																										updateBoard(CurrPlayer, Line, Column, Board, NewBoard), !,											
 																										gameTransitionState(player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt), Line, Column, NewBoard).
 
 % Updates board Status
-updateBoard(Player, Line, Column, Board, NewBoard):-	player(Player, Piece),
+updateBoard(Player, Line, Column, Board, NewBoard):-	player(Player, Piece, _),
 														setPiece(Line, Column, Board, NewBoard, Piece).
 
 														
@@ -223,7 +245,7 @@ handleInput(Board, Player, Line, Column, EmptyCells):-	format('~n   Invalid move
 														handleInput(Board, Player, Line, Column, EmptyCells).
 
 % Retrieves player input
-userInput(Player, X, Y):-	player(Player, Num), modelToView(Num, Symb),
+userInput(Player, X, Y):-	player(Player, Num, _), modelToView(Num, Symb),
 							format('-> Player ~p [~p] turn:~n~n', [Num, Symb]), 	
 							write('   Line: '), read(X),
 							write('   Column: '), read(Y), !.
@@ -304,7 +326,7 @@ positiveDiagonalVictory(Player, Line, Column, Board, Iterator):-	retrievePieces(
 %%%%%%%%%%%%%%%%%%%%%%%
 
 validateVictory(_, _, _, _, _, _, [], 5).
-validateVictory(Type, Player, Line, Column, Board, Iterator, [H|T], NumPieces):- 	player(Player, Symb),
+validateVictory(Type, Player, Line, Column, Board, Iterator, [H|T], NumPieces):- 	player(Player, Symb, _),
 																					Symb = H, !,
 																					NewNumPieces is NumPieces + 1,
 																					validateVictory(Type, Player, Line, Column, Board, Iterator, T, NewNumPieces).
@@ -335,7 +357,7 @@ verifyCaptures(CurrPlayer, Line, Column, Board, NewBoard, Num_Capt):- 	verifyHor
 																		Num_Capt is Hor_Capt + Ver_Capt + Neg_Capt + Pos_Capt .
 
 % - horizontal captures
-verifyHorizontalCaptures(CurrPlayer, Line, Column, Board, NewBoard, Hor_Capt):- 	player(CurrPlayer, Symb), 
+verifyHorizontalCaptures(CurrPlayer, Line, Column, Board, NewBoard, Hor_Capt):- 	player(CurrPlayer, Symb, _), 
 																					NewColumn is Column - 3, 
 																					retrievePieces('horizontal', 1, Line, Column, Board, _, Right_Pieces), 
 																					retrievePieces('horizontal', 1, Line, NewColumn, Board, _, Left_Pieces),
@@ -344,7 +366,7 @@ verifyHorizontalCaptures(CurrPlayer, Line, Column, Board, NewBoard, Hor_Capt):- 
 																					Hor_Capt is Right_Capt + Left_Capt .
 																		
 % - vertical captures
-verifyVerticalCaptures(CurrPlayer, Line, Column, Board, NewBoard, Ver_Capt):- 	player(CurrPlayer, Symb), 
+verifyVerticalCaptures(CurrPlayer, Line, Column, Board, NewBoard, Ver_Capt):- 	player(CurrPlayer, Symb, _), 
 																				NewLine is Line - 3, 
 																				retrievePieces('vertical', 1, Line, Column, Board, _, Top_Pieces), 
 																				retrievePieces('vertical', 1, NewLine, Column, Board, _, Bottom_Pieces),
@@ -354,7 +376,7 @@ verifyVerticalCaptures(CurrPlayer, Line, Column, Board, NewBoard, Ver_Capt):- 	p
 
 
 % - negativeDiagonal captures
-verifyNegativeDiagonalCaptures(CurrPlayer, Line, Column, Board, NewBoard, Neg_Capt):- 	player(CurrPlayer, Symb), 
+verifyNegativeDiagonalCaptures(CurrPlayer, Line, Column, Board, NewBoard, Neg_Capt):- 	player(CurrPlayer, Symb, _), 
 																						NewLine is Line - 3,
 																						NewColumn is Column + 3,
 																						retrievePieces('negativeDiagonal', 1, Line, Column, Board, _, Top_Pieces), 
@@ -364,7 +386,7 @@ verifyNegativeDiagonalCaptures(CurrPlayer, Line, Column, Board, NewBoard, Neg_Ca
 																						Neg_Capt is Top_Capt + Bottom_Capt .
 
 % - positiveDiagonal captures																		
-verifyPositiveDiagonalCaptures(CurrPlayer, Line, Column, Board, NewBoard, Pos_Capt):- 	player(CurrPlayer, Symb), 
+verifyPositiveDiagonalCaptures(CurrPlayer, Line, Column, Board, NewBoard, Pos_Capt):- 	player(CurrPlayer, Symb, _), 
 																						NewLine is Line - 3,
 																						NewColumn is Column - 3,
 																						retrievePieces('positiveDiagonal', 1, Line, Column, Board, _, Top_Pieces), 
