@@ -1,31 +1,31 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Board Manipulation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% API: getPiece/4 and setPiece/5
+% API: boardSize/3, emptyBoard/1, fullBoard/1, getPiece/4 and setPiece/5
 % Auxiliary Predicates: getLine/3, getColumn/3, setLine/4 and setColumn/4
 
 
 % Initial State of Board:
-board([ ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-		['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
-	  ]).
+initialBoard([ 	['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
+			 ]).
 
 % Symbol converter
 modelToView('0','+').
@@ -33,9 +33,36 @@ modelToView('1','O').
 modelToView('2','X').
 modelToView('3','#').
 
-% Struct info: player - player symbol - number of captures
-player('playerOne', '1', _).  
-player('playerTwo', '2', _).
+% Player info: player - player symbol - number of captures
+player(playerOne, '1', 0).  
+player(playerTwo, '2', 0).
+
+
+% Retrieves the dimensions of a rectangular board.
+
+% +Board: 	 	Internal Representation of the board to be checked.
+% -LineSize: 	Number of Lines in the board.
+% -ColumnSize: 	Number of Columns in the board.
+boardSize(Board, LineSize, ColSize):-	Board = [FirstLine | _],
+										length(Board, LineSize),
+										length(FirstLine, ColSize).
+												
+												
+% Succeeds if the board is empty (is in its initial state)
+
+% +Board: Internal Representation of the board to be checked.
+emptyBoard(Board):- initialBoard(Board).
+
+% Succeeds if the board is full (resulting in a draw)
+
+% +Board: Internal Representation of the board to be checked.
+fullBoard([]).
+fullBoard([H|T]):- 	fullLine(H),
+					fullBoard(T).
+fullLine([]).
+fullLine([H|T]):-	H \= '0',
+					fullLine(T).
+					
 
 % Retrieves a Cell from a given board.
 
@@ -43,8 +70,9 @@ player('playerTwo', '2', _).
 %  	+ColNo: Row number for the cell to be retrieved.
 %	+Board: Internal Representation of the board.
 %	-Piece: Cell value retrieved from the board
-getPiece(LinNo, ColNo, Board, Piece):-	LinNo >= 1, LinNo =< 19,
-										ColNo >= 1, ColNo =< 19,
+getPiece(LinNo, ColNo, Board, Piece):-	boardSize(Board, LineSize, ColSize),
+										LinNo >= 1, LinNo =< LineSize,
+										ColNo >= 1, ColNo =< ColSize,
 										getLine(LinNo, Board, Line), 
 										getColumn(ColNo, Line, Piece).
 	
@@ -118,6 +146,8 @@ setLine(LinNo, MaxLines, NewLine, [H|Told], [H|Tnew]) :-	LinNo < MaxLines,
 
 % Displays the game board in a user friendly format.
 % The board must be rectangular.
+% The board will be improperly displayed if it contains 100 or more lines (100+ Lines will be offset to the right)
+% or if there are more than 26 columns (identifiers will still correspond to a single character, however it'll keep going beyond letters).
 
 % +Board: Internal Representation of the board to be displayed.								
 displayGame(Board):-	Board = [FirstLine | _],
@@ -131,7 +161,7 @@ displayGame([H], LineNumber, _):-			displayLine(H, LineNumber).
 displayGame([H|T], LineNumber, ColSize):-	displayLine(H, LineNumber),
 											displaySepLine(ColSize),
 											NextLineNumber is LineNumber - 1,
-											displayGame(T, NextLineNumber).
+											displayGame(T, NextLineNumber, ColSize).
 
 
 % Displays a Row containing the identifiers of the collumns, allowing the player to easily identify cells
@@ -182,14 +212,87 @@ displaySepLine(Size):- 	write('   '),
 dispSepLine(1):- 		write('|\n').
 dispSepLine(Size):- 	write('|  '),
 						DecSize is Size - 1,
-						displaySepLine(DecSize).	
+						dispSepLine(DecSize).	
 						
 
 % Displays information about each players' number of captures 						
-displayPlayerCaptInfo:- player('playerOne', _, P1Captures),
-						player('playerTwo', _, P2Captures),
+displayPlayerCaptInfo:- player(playerOne, _, P1Captures),
+						player(playerTwo, _, P2Captures),
 						format('   Player One -> [~p] Captures    ', P1Captures), 
 						format('   Player Two -> [~p] Captures~n~n', P2Captures).
+						
+						
+						
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Input Handling %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% API: handleInput/4.
+% Auxiliary Predicates: userInput/3, flushInput/0, readLine/1, readColumn/1, validateUserInput/3.
+
+% Handles Player Input for current turn.
+% The output provided is compatible with the board accessors, in particular setPiece/5.
+
+% +Board: 	 Internal Representation of the Board in its current state.
+% +PlayerID: ID of the Player whose input is being retrieved.
+% -Line: 	 Line number chosen by the player for its turn.
+% -Column: 	 Column number chosen by the player for its turn.
+handleInput(Board, PlayerID, Line, Column):- 	player(PlayerID, PieceID, _),
+												userInput(PieceID, Line, Column),
+												validateUserInput(Board, Line, Column).
+handleInput(Board, PlayerID, Line, Column):-	emptyBoard(Board), 
+												format('~n   Invalid move. First move must be at the center of the board.~n~n', []),
+												handleInput(Board, PlayerID, Line, Column).
+handleInput(Board, PlayerID, Line, Column):-	format('~n   Invalid move. Chosen cell is either invalid or occupied.~n~n', []),
+												handleInput(Board, PlayerID, Line, Column).
+
+% Retrieves the player input (after processing)
+
+% +PieceID:	Model ID of the player's piece.
+% -Line: 	Line number chosen by the player for its turn.
+% -Column: 	Column number chosen by the player for its turn.
+userInput(PieceID, Line, Column):-	modelToView(PieceID, PieceSymb),
+									format('-> Player ~p [~p] turn:~n~n', [PieceID, PieceSymb]),
+									write('   Line: '),   read(Line),
+									write('   Column: '), read(Column),
+									nl.
+						
+%%%%%%%%% ### TODO ### - Figure out how to properly handle input					
+						
+% Reads the number of the line input by the user
+
+% -Line: Line number chosen by the player for its turn.
+readLine(Line):- 		readLine(0, Line).
+
+readLine(Num, Line):- 	get_code(CharCode),
+						Digit is CharCode - 48, %Ascii value for '0'.
+						Digit >= 0, Digit =< 9,
+						NextNum is Num + Digit * 10,
+						readLine(NextNum, Line).					
+readLine(Line, Line).
+
+
+% Reads the letter of the column input by the user.
+% The letter is converted to the internal column number.
+
+% -Column: Column number chosen by the player for its turn.
+readColumn(Column):- get_code(CharCode),
+					 Column is CharCode - 65. %Ascii value for 'A'.
+
+					
+% Suceeds if the provided user input is valid.
+% If the board has even columns of lines, the middle will be offset to the right / down.
+
+% +Board: 	Internal Representation of the Board in its current state.
+% +Line: 	Line number chosen by the player for its turn.
+% +Column: 	Column number chosen by the player for its turn.
+validateUserInput(Board, Line, Column):- 	emptyBoard(Board),
+											!,
+											boardSize(Board, LineSize, ColSize),
+											Line * 2 =:= LineSize + 1,
+											Column * 2 =:= ColSize + 1.
+validateUserInput(Board, Line, Column):-	getPiece(Line, Column, Board, '0').
+											
+											
 											
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Game State Transitions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -197,20 +300,20 @@ displayPlayerCaptInfo:- player('playerOne', _, P1Captures),
 % Game Initial State:		startGame/0
 % Game End
 % Game State Transtion:		gameStep/3
-% Board State Transition: 	boardStep/5
+% Board State Transition: 	boardStep/7
 
 % Initializes the game in its initial state (Empty Board)
-startGame:- board(Board),
-			gameStep(Board, player('playerOne', P1_Num, 0), player('playerTwo', P2_Num, 0)).		
+startGame:- initialBoard(Board),
+			gameStep(Board, playerOne, playerTwo).		
 
 			
 % Ends the game depending on its final state (Win by Pieces in a row, Win by captures, Draw)			
 endGame(Board, Num):- 	displayGame(Board),
 						modelToView(Num, Symb),
-						format('-> Victory: Player ~p was won the game by having five <~p> pieces in a row!~n~n', [Num, Symb]).
+						format('-> Victory: Player ~p won the game by having five <~p> pieces in a row!~n~n', [Num, Symb]).
 						
 endGame(Board, Num, Captures):- displayGame(Board),
-								format('-> Victory: Player ~p was won the game by making 10 or more captures [~p] !~n~n', [Num, Captures]).																													
+								format('-> Victory: Player ~p won the game by making 10 or more captures [~p] !~n~n', [Num, Captures]).																													
 								
 endGame(Board):- 	displayGame(Board),
 					format('-> Draw: No more cells available !~n~n', []).
@@ -219,27 +322,29 @@ endGame(Board):- 	displayGame(Board),
 % Handles the transition between two game states.
 
 % +Board: 		Internal Representation of the Board in its current state.
-% +CurrPlayer:	Internal Representation of the Player going to play this turn
-% +NextPlayer:	Internal Representation of this turn's player opponent.
+% +CurrPlayer:	ID of the Player going to play this turn
+% +NextPlayer:	ID of this turn's player opponent.
 gameStep(Board, CurrPlayer, NextPlayer):- 	displayGame(Board),	
-											displayPlayerCaptInfo(),
-											boardEmptyCells(Board, 0, EmptyCells), 
-											handleInput(Board, CurrPlayer, Line, Column, EmptyCells),
-											boardStep(Board, Line, Column, _Score).
-											% updateBoard(CurrPlayer, Line, Column, Board, NewBoard), !,											
-											% gameTransitionState(player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt), Line, Column, NewBoard).
+											displayPlayerCaptInfo, 
+											handleInput(Board, CurrPlayer, Line, Column),
+											boardStep(Board, NewBoard, CurrPlayer, NextPlayer, Line, Column, _Score),
+											% Analyse Score to check if endgame was reached or not
+											gameStep(NewBoard, NextPlayer, CurrPlayer).
 
 
 % Handles the transition between two board states. 
 % This including updating the board and checking its current status in respect to the game
 
 % +Board:		Internal Representation of the Board in its current state.
-% +CurrPlayer:	Internal Representation of the Player going to play this turn.
+% +NewBoard:		Internal Representation of the Board in its resulting state.
+% +CurrPlayer:	ID the Player going to play this turn.
+% +NextPlayer:	ID the opponent of the Player playing this turn.
 % +SetLine:		Line of the cell where the player is playing his piece.
 % +SetColumn:	Column of the cell where the player is playing his piece.
 % -Score:		Score of the resulting board state (Used to evaluate AI movements).
-boardStep(Board, player(_, Piece, CaptureNo), SetLine, SetColumn, Score) :- setPiece(SetLine, SetColumn, Board, NewBoard, Piece).
-																			% Do victory and capture analysis here.
+boardStep(Board, NewBoard, CurrPlayer, NextPlayer, SetLine, SetColumn, Score) :- 	player(CurrPlayer, Piece, CaptureNo),
+																					setPiece(SetLine, SetColumn, Board, NewBoard, Piece).
+																					% Do victory and capture analysis here.
 
 														
 % Check possible game state transations: Victory or Captures																										
@@ -256,40 +361,6 @@ checkPlayerCaptures(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextP
 																		
 checkDraw(Board, player(_, _, _), player(_, _, _), 0):- endGame(Board).								
 checkDraw(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt), _):- gameStep(Board, player(NextPlayer, Next_Num, Next_Capt), player(CurrPlayer, Curr_Num, Curr_Capt)).																
-
-%%%%%%%%%%%%%%%%%%
-%% Handle input %%
-%%%%%%%%%%%%%%%%%%
-
-handleInput(Board, Player, Line, Column, EmptyCells):- 	userInput(Player, Line, Column),
-														validateUserInput(Board, Line, Column, EmptyCells).
-handleInput(Board, Player, Line, Column, EmptyCells):-	EmptyCells = 361, 
-														format('~n   Invalid move. First move must be at the center of the board.~n~n', []),
-														handleInput(Board, Player, Line, Column, EmptyCells).
-handleInput(Board, Player, Line, Column, EmptyCells):-	format('~n   Invalid move. Chosen cell is either invalid or occupied.~n~n', []),
-														handleInput(Board, Player, Line, Column, EmptyCells).
-
-% Retrieves player input
-userInput(Player, X, Y):-	player(Player, Num, _), modelToView(Num, Symb),
-							format('-> Player ~p [~p] turn:~n~n', [Num, Symb]), 	
-							write('   Line: '), read(X),
-							write('   Column: '), read(Y), !.
-
-% Validates user input
-validateUserInput(Board, X, Y, 361):-	X = 10, Y = 10,
-										getPiece(X, Y, Board, Piece),
-										Piece = '0'.
-validateUserInput(Board, X, Y, EmptyCells):-	EmptyCells \= 361,
-												getPiece(X, Y, Board, Piece),
-												Piece = '0'.
-
-% Determines how many cells still empty
-boardEmptyCells([], Iterator, EmptyCells):-  EmptyCells is Iterator.
-boardEmptyCells([H|T], Iterator, EmptyCells):-  lineEmptyCells(H, 0, LineEmptyCells), NewIterator is Iterator + LineEmptyCells, boardEmptyCells(T, NewIterator, EmptyCells).
-
-lineEmptyCells([], Iterator, EmptyCells):- EmptyCells is Iterator.
-lineEmptyCells([H|T], Iterator, EmptyCells):- H = '0', NewIterator is Iterator + 1, lineEmptyCells(T, NewIterator, EmptyCells).
-lineEmptyCells([_|T], Iterator, EmptyCells):- lineEmptyCells(T, Iterator, EmptyCells). 
 				
 				
 %%%%%%%%%%%%%%%%%%%%%%%%														
