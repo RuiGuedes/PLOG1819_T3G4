@@ -33,10 +33,6 @@ modelToView('1','O').
 modelToView('2','X').
 modelToView('3','#').
 
-% Player info: player - player symbol - number of captures
-player(playerOne, '1', 0).  
-player(playerTwo, '2', 0).
-
 
 % Retrieves the dimensions of a rectangular board.
 
@@ -216,10 +212,9 @@ dispSepLine(Size):- 	write('|  '),
 						
 
 % Displays information about each players' number of captures 						
-displayPlayerCaptInfo:- player(playerOne, _, P1Captures),
-						player(playerTwo, _, P2Captures),
-						format('   Player One -> [~p] Captures    ', P1Captures), 
-						format('   Player Two -> [~p] Captures~n~n', P2Captures).
+displayPlayerCaptInfo(player(playerOne, _, P1Captures, _), player(playerTwo, _, P2Captures, _)):-	format('   Player One -> [~p] Captures    ', P1Captures), 
+																									format('   Player Two -> [~p] Captures~n~n', P2Captures).
+displayPlayerCaptInfo(PlayerTwo, PlayerOne):- displayPlayerCaptInfo(PlayerOne, PlayerTwo).																								
 						
 						
 						
@@ -236,14 +231,13 @@ displayPlayerCaptInfo:- player(playerOne, _, P1Captures),
 % +PlayerID: ID of the Player whose input is being retrieved.
 % -Line: 	 Line number chosen by the player for its turn.
 % -Column: 	 Column number chosen by the player for its turn.
-handleInput(Board, PlayerID, Line, Column):- 	player(PlayerID, PieceID, _),
-												userInput(PieceID, Line, Column),
-												validateUserInput(Board, Line, Column).
-handleInput(Board, PlayerID, Line, Column):-	emptyBoard(Board), 
-												format('~n   Invalid move. First move must be at the center of the board.~n~n', []),
-												handleInput(Board, PlayerID, Line, Column).
-handleInput(Board, PlayerID, Line, Column):-	format('~n   Invalid move. Chosen cell is either invalid or occupied.~n~n', []),
-												handleInput(Board, PlayerID, Line, Column).
+handleInput(Board, player(_, PieceID, _, _), Line, Column):- 	userInput(PieceID, Line, Column),
+																validateUserInput(Board, Line, Column).
+handleInput(Board, Player, Line, Column):-	emptyBoard(Board), 
+											format('~n   Invalid move. First move must be at the center of the board.~n~n', []),
+											handleInput(Board, Player, Line, Column).
+handleInput(Board, Player, Line, Column):-	format('~n   Invalid move. Chosen cell is either invalid or occupied.~n~n', []),
+											handleInput(Board, Player, Line, Column).
 
 % Retrieves the player input (after processing)
 
@@ -304,7 +298,7 @@ validateUserInput(Board, Line, Column):-	getPiece(Line, Column, Board, '0').
 
 % Initializes the game in its initial state (Empty Board)
 startGame:- initialBoard(Board),
-			gameStep(Board, playerOne, playerTwo).		
+			gameStep(Board, player(playerOne, '1', 0, 0), player(playerTwo, '2', 0, 0)).		
 
 			
 % Ends the game depending on its final state (Win by Pieces in a row, Win by captures, Draw)			
@@ -325,7 +319,7 @@ endGame(Board):- 	displayGame(Board),
 % +CurrPlayer:	ID of the Player going to play this turn
 % +NextPlayer:	ID of this turn's player opponent.
 gameStep(Board, CurrPlayer, NextPlayer):- 	displayGame(Board),	
-											displayPlayerCaptInfo, 
+											displayPlayerCaptInfo(CurrPlayer, NextPlayer), 
 											handleInput(Board, CurrPlayer, Line, Column),
 											boardStep(Board, NewBoard, CurrPlayer, NextPlayer, Line, Column, _Score),
 											% Analyse Score to check if endgame was reached or not
@@ -342,9 +336,9 @@ gameStep(Board, CurrPlayer, NextPlayer):- 	displayGame(Board),
 % +SetLine:		Line of the cell where the player is playing his piece.
 % +SetColumn:	Column of the cell where the player is playing his piece.
 % -Score:		Score of the resulting board state (Used to evaluate AI movements).
-boardStep(Board, NewBoard, CurrPlayer, NextPlayer, SetLine, SetColumn, Score) :- 	player(CurrPlayer, Piece, CaptureNo),
-																					setPiece(SetLine, SetColumn, Board, NewBoard, Piece).
-																					% Do victory and capture analysis here.
+boardStep(Board, NewBoard, player(CurrPlayerID, Piece, CaptureNo, SequenceNo), NextPlayer, SetLine, SetColumn, Score) :- 	setPiece(SetLine, SetColumn, Board, NewBoard, Piece).
+																														% Do sequence and capture analysis here.
+																					
 
 														
 % Check possible game state transations: Victory or Captures																										
