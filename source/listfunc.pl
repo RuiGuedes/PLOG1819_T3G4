@@ -321,26 +321,27 @@ endGame(Board):- 	displayGame(Board),
 gameStep(Board, CurrPlayer, NextPlayer):- 	displayGame(Board),	
 											displayPlayerCaptInfo(CurrPlayer, NextPlayer), 
 											handleInput(Board, CurrPlayer, Line, Column),
-											boardStep(Board, NewBoard, CurrPlayer, NextPlayer, Line, Column, _Score),
+											boardStep(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, _Score),
 											% Analyse Score to check if endgame was reached or not
-											gameStep(NewBoard, NextPlayer, CurrPlayer).
+											gameStep(NewBoard, NextPlayer, NewCurrPlayer).
 
 
 % Handles the transition between two board states. 
 % This including updating the board and checking its current status in respect to the game
 
 % +Board:		Internal Representation of the Board in its current state.
-% +NewBoard:		Internal Representation of the Board in its resulting state.
+% +NewBoard:	Internal Representation of the Board in its resulting state.
 % +CurrPlayer:	ID the Player going to play this turn.
 % +NextPlayer:	ID the opponent of the Player playing this turn.
 % +SetLine:		Line of the cell where the player is playing his piece.
 % +SetColumn:	Column of the cell where the player is playing his piece.
 % -Score:		Score of the resulting board state (Used to evaluate AI movements).
-boardStep(Board, NewBoard, player(CurrPlayerID, Piece, CaptureNo, SequenceNo), NextPlayer, SetLine, SetColumn, Score) :- 	setPiece(SetLine, SetColumn, Board, NewBoard, Piece).
-																														% Do sequence and capture analysis here.
-																					
-
-														
+boardStep(Board, NewBoard, player(CurrPlayerID, CurrPiece, CurrCaptureNo, CurrSequenceNo), player(_, NextPiece, NextCaptureNo, NextSequenceNo), player(CurrPlayerID, CurrPiece, NewCaptureNo, NewSequenceNo), SetLine, SetColumn, Score) :- 	
+		setPiece(SetLine, SetColumn, Board, NewBoard, CurrPiece),
+		updateSequence(CurrPiece, NewBoard, SetLine, SetColumn, CurrSequenceNo, NewSequenceNo),
+		updateCaptures(CurrPiece, NextPiece, NewBoard, SetLine, SetColumn, CurrCaptureNo, NewCaptureNo).
+		
+		
 % Check possible game state transations: Victory or Captures																										
 gameTransitionState(player(CurrPlayer, Curr_Num, _), _, Line, Column, Board):- 	updateGameState(CurrPlayer, Line, Column, Board), endGame(Board, Curr_Num).
 gameTransitionState(player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt), Line, Column, Board):- 	verifyCaptures(CurrPlayer, Line, Column, Board, NewBoard, Num_Capt), 
@@ -357,14 +358,76 @@ checkDraw(Board, player(_, _, _), player(_, _, _), 0):- endGame(Board).
 checkDraw(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt), _):- gameStep(Board, player(NextPlayer, Next_Num, Next_Capt), player(CurrPlayer, Curr_Num, Curr_Capt)).																
 				
 				
-%%%%%%%%%%%%%%%%%%%%%%%%														
-%% Updates game state %%
-%%%%%%%%%%%%%%%%%%%%%%%%
-													
-updateGameState(Player, Line, Column, Board):- victoryBySequence(Player, Line, Column, Board).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Sequence and Capture Check %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Main predicates: updateSequence/6, updateCaptures/7
 
-% Checks possible victory on:
+% Auxiliary predicates: getSequence/5, sequence/8
 
+
+% types of directions and their row and column increment
+direction(horizontal ,  0, 1).
+direction(vertical	 ,  1, 0).
+direction(posDiagonal,  1, 1).
+direction(negDiagonal, -1, 1).
+
+
+% Updates the Sequence Number of the player whose turn is being processed.
+
+% Must be called after the board is updated with the player's new piece
+
+% +Piece: 		Model ID of the player's piece.
+% +Board:			Internal Representation of the Board this turn, after being updated.
+% +SetLine:			Line of the cell where the player placed his piece this turn.
+% +SetColumn:		Column of the cell where the player placed his piece this turn.
+% +CurrSequenceNo: 	Maximum sequence of pieces in a row the player has before this turn.
+% -NewSequenceNo: 	Maximum sequence of pieces in a row the player has after this turn.
+updateSequence(Piece, Board, SetLine, SetColumn, CurrSequenceNo, NewSequenceNo) :- 	getSequence(Piece, Board, SetLine, SetColumn, CalcSequenceNo),
+																					NewSequenceNo = max(CurrSequenceNo, CalcSequenceNo).
+
+																				
+% Calculates the Sequence Number from the player's latest move.
+
+% Must be called after the board is updated with the player's new piece
+
+% +Piece: 		Model ID of the player's piece.
+% +Board:			Internal Representation of the Board this turn, after being updated.
+% +SetLine:			Line of the cell where the player placed his piece this turn.
+% +SetColumn:		Column of the cell where the player placed his piece this turn.
+% -CalcSequenceNo: 	Maximum sequence of pieces in a row from this turn's move.
+getSequence(Piece, Board, SetLine, SetColumn, MaxSequenceNo) :-	getSequence(horizontal,  Piece, Board, SetLine, SetColumn, HorizontalSequenceNo),
+																getSequence(vertical, 	 Piece, Board, SetLine, SetColumn, VerticalSequenceNo),
+																getSequence(posDiagonal, Piece, Board, SetLine, SetColumn, PosDiagonalSequenceNo),
+																getSequence(negDiagonal, Piece, Board, SetLine, SetColumn, NegDiagonalSequenceNo),
+																max_list([HorizontalSequenceNo, VerticalSequenceNo, PosDiagonalSequenceNo, NegDiagonalSequenceNo], MaxSequenceNo).
+																
+getSequence(Direction, Piece, Board, SetLine, SetColumn, MaxSequenceNo) :-	direction(Direction, LineInc, ColInc),
+																			LineDec is -LineInc, ColDec is -ColInc,
+																			sequence(Piece, Board, SetLine, SetColumn, LineDec, ColDec, -1,  LeftSequenceNo), % Starts in -1 to compensate duplicate counting of the start cell.
+																			sequence(Piece, Board, SetLine, SetColumn, LineInc, ColInc, LeftSequenceNo, MaxSequenceNo).
+																		
+% Calculates the Sequence Number in a direction (including the starting cell) accumulated with an initial value.
+
+% +Piece: 		Model ID of the player's piece.
+% +Board:			Internal Representation of the Board this turn, after being updated.
+% +SetLine:			Line of the cell being processed first.
+% +SetColumn:		Column of the cell being processed first.
+% +LineInc:			Line value to be incremented each step of the sequence
+% +ColInc:			Column value to be incremented each step of the sequence
+% +InitialValue:	Initial sequence value from previous accumulations
+% -SequenceNo: 		Sequence number of pieces in a row from the given cell and direction.																	
+sequence(Piece, Board, SetLine, SetColumn, LineInc, ColInc, InitialValue, SequenceNo) :- 	getPiece(SetLine, SetColumn, Board, Piece),
+																							NewLine is SetLine + LineInc,
+																							NewColumn is SetColumn + ColInc,
+																							NewValue is InitialValue + 1,
+																							sequence(Piece, Board, NewLine, NewColumn, LineInc, ColInc, NewValue, SequenceNo).
+
+sequence(_, _, _, _, _, _, SequenceNo, SequenceNo).
+
+
+% ----- Deprecated stuff (kept till refactor is approved)
+																
 % - horizontal direction
 victoryBySequence(Player, Line, Column, Board):-	NewColumn is Column - 4, horizontalVictory(Player, Line, NewColumn, Board, 0).
 
