@@ -232,8 +232,8 @@ displayPlayerCaptInfo(PlayerTwo, PlayerOne):- displayPlayerCaptInfo(PlayerOne, P
 % -Line: 	 Line number chosen by the player for its turn.
 % -Column: 	 Column number chosen by the player for its turn.
 handleInput(Board, player(_, PieceID, _, _), Line, Column):- 	userInput(PieceID, Line, Column),
-																validateUserInput(Board, Line, Column).
-handleInput(Board, Player, Line, Column):-	emptyBoard(Board), 
+																validateUserInput(Board, Line, Column), !.
+handleInput(Board, Player, Line, Column):-	emptyBoard(Board), !,
 											format('~n   Invalid move. First move must be at the center of the board.~n~n', []),
 											handleInput(Board, Player, Line, Column).
 handleInput(Board, Player, Line, Column):-	format('~n   Invalid move. Chosen cell is either invalid or occupied.~n~n', []),
@@ -291,29 +291,17 @@ validateUserInput(Board, Line, Column):-	getPiece(Line, Column, Board, '0').
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Game State Transitions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Game Initial State:		startGame/0
-% Game End
-% Game State Transtion:		gameStep/3
-% Board State Transition: 	boardStep/7
+% Game Initial State:					startGame/0
+% Game State Handling and Transition:	gameStep/3, nextGameStep/4
+% Board State Handling and Transition: 	boardStep/7
+% Game End States:						winGame/3, drawGame/3
 
 % Initializes the game in its initial state (Empty Board)
 startGame:- initialBoard(Board),
-			gameStep(Board, player(playerOne, '1', 0, 0), player(playerTwo, '2', 0, 0)).		
-
-			
-% Ends the game depending on its final state (Win by Pieces in a row, Win by captures, Draw)			
-endGame(Board, Num):- 	displayGame(Board),
-						modelToView(Num, Symb),
-						format('-> Victory: Player ~p won the game by having five <~p> pieces in a row!~n~n', [Num, Symb]).
-						
-endGame(Board, Num, Captures):- displayGame(Board),
-								format('-> Victory: Player ~p won the game by making 10 or more captures [~p] !~n~n', [Num, Captures]).																													
-								
-endGame(Board):- 	displayGame(Board),
-					format('-> Draw: No more cells available !~n~n', []).
+			gameStep(Board, player(playerOne, '1', 0, 0), player(playerTwo, '2', 0, 0)).
 
 
-% Handles the transition between two game states.
+% Computes a single game state.
 
 % +Board: 		Internal Representation of the Board in its current state.
 % +CurrPlayer:	ID of the Player going to play this turn
@@ -321,9 +309,8 @@ endGame(Board):- 	displayGame(Board),
 gameStep(Board, CurrPlayer, NextPlayer):- 	displayGame(Board),	
 											displayPlayerCaptInfo(CurrPlayer, NextPlayer), 
 											handleInput(Board, CurrPlayer, Line, Column),
-											boardStep(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, _Score),
-											% Analyse Score to check if endgame was reached or not
-											gameStep(NewBoard, NextPlayer, NewCurrPlayer).
+											boardStep(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, Score),											
+											nextGameStep(NewBoard, NextPlayer, NewCurrPlayer, Score).
 
 
 % Handles the transition between two board states. 
@@ -331,37 +318,69 @@ gameStep(Board, CurrPlayer, NextPlayer):- 	displayGame(Board),
 
 % +Board:		Internal Representation of the Board in its current state.
 % +NewBoard:	Internal Representation of the Board in its resulting state.
-% +CurrPlayer:	ID the Player going to play this turn.
-% +NextPlayer:	ID the opponent of the Player playing this turn.
+% +CurrPlayer:	Internal Representation of the Player going to play this turn.
+% +NextPlayer:	Internal Representation of the opponent of the Player playing this turn.
 % +SetLine:		Line of the cell where the player is playing his piece.
 % +SetColumn:	Column of the cell where the player is playing his piece.
-% -Score:		Score of the resulting board state (Used to evaluate AI movements).
+% -Score:		Score of the resulting state (Used to evaluate AI movements and end states) Range:[-100, 100].
 boardStep(Board, NewBoard, player(CurrPlayerID, CurrPiece, CurrCaptureNo, CurrSequenceNo), player(_, NextPiece, NextCaptureNo, NextSequenceNo), player(CurrPlayerID, CurrPiece, NewCaptureNo, NewSequenceNo), SetLine, SetColumn, Score) :- 	
 		setPiece(SetLine, SetColumn, Board, NewBoard, CurrPiece),
 		updateSequence(CurrPiece, NewBoard, SetLine, SetColumn, CurrSequenceNo, NewSequenceNo),
-		updateCaptures(CurrPiece, NextPiece, NewBoard, SetLine, SetColumn, CurrCaptureNo, NewCaptureNo).
-		
-		
-% Check possible game state transations: Victory or Captures																										
-gameTransitionState(player(CurrPlayer, Curr_Num, _), _, Line, Column, Board):- 	updateGameState(CurrPlayer, Line, Column, Board), endGame(Board, Curr_Num).
-gameTransitionState(player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt), Line, Column, Board):- 	verifyCaptures(CurrPlayer, Line, Column, Board, NewBoard, Num_Capt), 
-																																updatePlayerCaptures(player(CurrPlayer, Curr_Num, Curr_Capt), player(NewPlayer, New_Num, New_Num_Capt), Num_Capt),
-																																checkPlayerCaptures(NewBoard, player(NewPlayer, New_Num, New_Num_Capt), player(NextPlayer, Next_Num, Next_Capt)).
-% After 10 captures the current player is considered the winner
-checkPlayerCaptures(Board, player(_, Curr_Num, Curr_Capt), _):- Curr_Capt >= 10, !,  endGame(Board, Curr_Num, Curr_Capt).
-checkPlayerCaptures(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt)):- 	Curr_Capt < 10, 
-																												boardEmptyCells(Board, 0, EmptyCells), 
-																												checkDraw(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt), EmptyCells).
-																												
-																		
-checkDraw(Board, player(_, _, _), player(_, _, _), 0):- endGame(Board).								
-checkDraw(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Next_Num, Next_Capt), _):- gameStep(Board, player(NextPlayer, Next_Num, Next_Capt), player(CurrPlayer, Curr_Num, Curr_Capt)).																
+		updateCaptures(CurrPiece, NextPiece, NewBoard, SetLine, SetColumn, CurrCaptureNo, NewCaptureNo),
+		value(NewCaptureNo, NewSequenceNo, NextCaptureNo, NextSequenceNo, Score). 
+
+% Handles the transition between two game states		
+
+% +NewBoard:		Internal Representation of the Board to be transitioned to the next state. 
+% +NewCurrPlayer:	Internal Representation of the Player going to play the next turn. 
+% +NewNextPlayer:	Internal Representation of the opponent of the Player playing the next turn.
+% +Score:			Score of the game state (Used to evaluate AI movements and end states) Range:[-100, 100].
+nextGameStep(NewBoard, NewCurrPlayer, NewNextPlayer, 100) 	:- 	winGame(NewBoard, NewNextPlayer, NewCurrPlayer). 	% The player who played the previous turn won the game (NewNextPlayer).
+nextGameStep(NewBoard, NewCurrPlayer, NewNextPlayer, _) 	:- 	fullBoard(NewBoard), drawGame(NewBoard, NewNextPlayer, NewCurrPlayer).
+nextGameStep(NewBoard, NewCurrPlayer, NewNextPlayer, _) 	:- 	gameStep(NewBoard, NewCurrPlayer, NewNextPlayer).																
+
+
+% TODO - Final Versions of the end game.
+
+% Ends the game, displaying the final state of the board and final stats of the players
+
+% +Board:			Internal Representation of the Board in its final state.
+% +WinningPlayer:	Internal Representation of the Player who won the game.
+% +LosingPlayer:	Internal Representation of the Player who lost the game.
+winGame(Board, player(_, Num, _, _), _LosingPlayer):- 	displayGame(Board),
+														modelToView(Num, Symb),
+														format('-> Victory: Player ~p won the game!~n~n', [Num, Symb]).
+
+% Ends the game, displaying the final state of the board and final stats of the players
+
+% +Board:			Internal Representation of the Board in its final state.
+% +WinningPlayer:	Internal Representation of the Player who won the game.
+% +LosingPlayer:	Internal Representation of the Player who lost the game.
+drawGame(Board, _WinningPlayer, _LosingPlayer):- 	displayGame(Board),
+													write('-> Draw: The board has been filled with neither players winning!~n~n').														
+
+
+					
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Board Evaluation (AI) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Computes the score of a game state to quantify how well the game is for a player
+
+% +CurrCaptureNo:	Number of captures by the current turn's player
+% +CurrSequenceNo:	Number of pieces in a row the current turn's player has
+% +NextSequenceNo:	Number of pieces in a row the current player's opponent has.
+% -Score:			Score attributed to the game state in the interval [-100, 100], where a maximal score represents a better state for the current player.
+value(CurrCaptureNo, CurrSequenceNo, _, _, 100)								:-	(CurrCaptureNo >= 1 ; CurrSequenceNo >= 5).
+value(_, _, NextCaptureNo, NextSequenceNo, -100) 							:-	(NextCaptureNo >= 10 ; NextSequenceNo >= 5).
+value(CurrCaptureNo, CurrSequenceNo, NextCaptureNo, NextSequenceNo, Score) 	:-	Score = CurrCaptureNo - NextCaptureNo + CurrSequenceNo - NextSequenceNo.
+				
 				
 				
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Sequence and Capture Check %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Main predicates: updateSequence/6, updateCaptures/7
+% API: 					updateSequence/6, updateCaptures/7
 
 % Auxiliary predicates: getSequence/5, getSequence/6, sequence/8, getCaptures/7, capture/8
 
@@ -383,8 +402,8 @@ direction(negDiagonal, -1, 1).
 % +SetColumn:		Column of the cell where the player placed his piece this turn.
 % +CurrSequenceNo: 	Maximum sequence of pieces in a row the player has before this turn.
 % -NewSequenceNo: 	Maximum sequence of pieces in a row the player has after this turn.
-updateSequence(Piece, Board, SetLine, SetColumn, CurrSequenceNo, NewSequenceNo) :- 	getSequence(Piece, Board, SetLine, SetColumn, CalcSequenceNo),
-																					NewSequenceNo = max(CurrSequenceNo, CalcSequenceNo).
+updateSequence(Piece, Board, SetLine, SetColumn, CurrSequenceNo, NewSequenceNo) :- 	getSequence(Piece, Board, SetLine, SetColumn, CalcSequenceNo), 
+																					max(NewSequenceNo, [CalcSequenceNo, CurrSequenceNo]).
 
 																				
 % Calculates the Sequence Number from the player's latest move.
@@ -400,7 +419,15 @@ getSequence(Piece, Board, SetLine, SetColumn, MaxSequenceNo) :-	getSequence(hori
 																getSequence(vertical, 	 Piece, Board, SetLine, SetColumn, VerticalSequenceNo),
 																getSequence(posDiagonal, Piece, Board, SetLine, SetColumn, PosDiagonalSequenceNo),
 																getSequence(negDiagonal, Piece, Board, SetLine, SetColumn, NegDiagonalSequenceNo),
-																max_list([HorizontalSequenceNo, VerticalSequenceNo, PosDiagonalSequenceNo, NegDiagonalSequenceNo], MaxSequenceNo).
+																max(MaxSequenceNo, [HorizontalSequenceNo, VerticalSequenceNo, PosDiagonalSequenceNo, NegDiagonalSequenceNo]).
+																
+max(Max, [H|T]) :- max(Max, H, T).
+
+max(Max, Max, []).
+max(Max, CurrMax, [H|T]) :- H > CurrMax, !,
+							max(Max, H, T).
+max(Max, CurrMax, [_|T]) :- max(Max, CurrMax, T).
+							
 																
 getSequence(Direction, Piece, Board, SetLine, SetColumn, MaxSequenceNo) :-	direction(Direction, LineInc, ColInc),
 																			LineDec is -LineInc, ColDec is -ColInc,
@@ -441,7 +468,7 @@ updateCaptures(CurrPiece, NextPiece, Board, SetLine, SetColumn, CurrCaptureNo, N
 																								getCaptures(posDiagonal, CurrPiece, NextPiece, Board, SetLine, SetColumn, PosDiagonalCaptureNo),
 																								getCaptures(negDiagonal, CurrPiece, NextPiece, Board, SetLine, SetColumn, NegDiagonalCaptureNo),
 																								!,
-																								NewCaptureNo = CurrCaptureNo + HorizontalCaptureNo + VerticalCaptureNo + PosDiagonalCaptureNo + NegDiagonalCaptureNo.
+																								NewCaptureNo is CurrCaptureNo + HorizontalCaptureNo + VerticalCaptureNo + PosDiagonalCaptureNo + NegDiagonalCaptureNo.
 
 % Calculates the Capture Number in a given direction from a given cell.
 
@@ -457,7 +484,7 @@ getCaptures(Direction, CurrPiece, NextPiece, Board, SetLine, SetColumn, CaptureN
 																						capture(CurrPiece, NextPiece, Board, SetLine, SetColumn, LineDec, ColDec, LeftCaptureNo), 	% LeftCaptureNo is either 1 or 0.
 																						capture(CurrPiece, NextPiece, Board, SetLine, SetColumn, LineInc, ColInc, RightCaptureNo), 	% LeftCaptureNo is either 1 or 0.
 																						!,
-																						CaptureNo = LeftCaptureNo + RightCaptureNo.
+																						CaptureNo is LeftCaptureNo + RightCaptureNo.
 
 % Checks if there was a capture in a given way from a given cell.
 
@@ -477,200 +504,3 @@ capture(CurrPiece, NextPiece, Board, Line1, Column1, LineInc, ColInc, CaptureNo)
 																					!,
 																					CaptureNo = 1.
 capture(_, _, _, _, _, _, _, 0).
-
-																					
-% ----- Deprecated stuff (kept till refactor is approved)
-																
-% - horizontal direction
-victoryBySequence(Player, Line, Column, Board):-	NewColumn is Column - 4, horizontalVictory(Player, Line, NewColumn, Board, 0).
-
-% - vertical direction
-victoryBySequence(Player, Line, Column, Board):-	NewLine is Line - 4, verticalVictory(Player, NewLine, Column, Board, 0).	
-
-% - negative diagonal direction
-victoryBySequence(Player, Line, Column, Board):-    NewColumn is Column + 4,
-													NewLine is Line - 4,
-													negativeDiagonalVictory(Player, NewLine, NewColumn, Board, 0).
-
-% - positive diagonal direction
-victoryBySequence(Player, Line, Column, Board):-	NewColumn is Column - 4,
-													NewLine is Line - 4,
-													positiveDiagonalVictory(Player, NewLine, NewColumn, Board, 0).
-												
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%  Victory Possibilities %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% - horizontal 
-horizontalVictory(_, _, _, _, 5):- !, fail.
-horizontalVictory(Player, Line, Column, Board, Iterator):-	retrievePieces('horizontal', 0, Line, Column, Board, _, Pieces), !,
-															validateVictory('horizontal', Player, Line, Column, Board, Iterator, Pieces, 0).															
-
-																		
-% - vertical									
-verticalVictory(_, _, _, _, 5):- !, fail.
-verticalVictory(Player, Line, Column, Board, Iterator):-	retrievePieces('vertical', 0, Line, Column, Board, _, Pieces), !, 
-															validateVictory('vertical', Player, Line, Column, Board, Iterator, Pieces, 0).		
-															
-
-% - negative diagonal
-negativeDiagonalVictory(_, _, _, _, 5):- !, fail.							
-negativeDiagonalVictory(Player, Line, Column, Board, Iterator):-	retrievePieces('negativeDiagonal', 0, Line, Column, Board, _, Pieces), !,
-																	validateVictory('negativeDiagonal', Player, Line, Column, Board, Iterator, Pieces, 0).																													
-																																																							
-																					
-% - positive diagonal
-positiveDiagonalVictory(_, _, _, _, 5):- !, fail.
-positiveDiagonalVictory(Player, Line, Column, Board, Iterator):-	retrievePieces('positiveDiagonal', 0, Line, Column, Board, _, Pieces), !,
-																	validateVictory('positiveDiagonal', Player, Line, Column, Board, Iterator, Pieces, 0).																													
-																	
-
-																	
-%%%%%%%%%%%%%%%%%%%%%%%
-%% Validates Victory %%
-%%%%%%%%%%%%%%%%%%%%%%%
-
-validateVictory(_, _, _, _, _, _, [], 5).
-validateVictory(Type, Player, Line, Column, Board, Iterator, [H|T], NumPieces):- 	player(Player, Symb, _),
-																					Symb = H, !,
-																					NewNumPieces is NumPieces + 1,
-																					validateVictory(Type, Player, Line, Column, Board, Iterator, T, NewNumPieces).
-validateVictory('horizontal', Player, Line, Column, Board, Iterator, _, _):- 	NewColumn is Column + 1,
-																				NewIterator is Iterator + 1, !,
-																				horizontalVictory(Player, Line, NewColumn, Board, NewIterator).
-validateVictory('vertical', Player, Line, Column, Board, Iterator, _, _):-	NewLine is Line + 1,
-																			NewIterator is Iterator + 1, !,
-																			verticalVictory(Player, NewLine, Column, Board, NewIterator).																				
-validateVictory('negativeDiagonal', Player, Line, Column, Board, Iterator, _, _):-	NewLine is Line + 1,
-																					NewColumn is Column - 1,
-																					NewIterator is Iterator + 1, !,
-																					negativeDiagonalVictory(Player, NewLine, NewColumn, Board, NewIterator).																		
-validateVictory('positiveDiagonal', Player, Line, Column, Board, Iterator, _, _):-	NewLine is Line + 1,
-																					NewColumn is Column + 1,
-																					NewIterator is Iterator + 1, !,
-																					positiveDiagonalVictory(Player, NewLine, NewColumn, Board, NewIterator).																						
-
-
-%%%%%%%%%%%%%%%%%%%%%
-%% Verify Captures %%
-%%%%%%%%%%%%%%%%%%%%%
-
-verifyCaptures(CurrPlayer, Line, Column, Board, NewBoard, Num_Capt):- 	verifyHorizontalCaptures(CurrPlayer, Line, Column, Board, Hor_Board, Hor_Capt), 
-																		verifyVerticalCaptures(CurrPlayer, Line, Column, Hor_Board, Ver_Board, Ver_Capt),
-																		verifyNegativeDiagonalCaptures(CurrPlayer, Line, Column, Ver_Board, Neg_Board, Neg_Capt),
-																		verifyPositiveDiagonalCaptures(CurrPlayer, Line, Column, Neg_Board, NewBoard, Pos_Capt),
-																		Num_Capt is Hor_Capt + Ver_Capt + Neg_Capt + Pos_Capt .
-
-% - horizontal captures
-verifyHorizontalCaptures(CurrPlayer, Line, Column, Board, NewBoard, Hor_Capt):- 	player(CurrPlayer, Symb, _), 
-																					NewColumn is Column - 3, 
-																					retrievePieces('horizontal', 1, Line, Column, Board, _, Right_Pieces), 
-																					retrievePieces('horizontal', 1, Line, NewColumn, Board, _, Left_Pieces),
-																					validateCapture('horizontal', 0, Symb, Line, Column, Board, Tmp_Board, Right_Pieces, Right_Capt),
-																					validateCapture('horizontal', 0, Symb, Line, NewColumn, Tmp_Board, NewBoard, Left_Pieces, Left_Capt), 
-																					Hor_Capt is Right_Capt + Left_Capt .
-																		
-% - vertical captures
-verifyVerticalCaptures(CurrPlayer, Line, Column, Board, NewBoard, Ver_Capt):- 	player(CurrPlayer, Symb, _), 
-																				NewLine is Line - 3, 
-																				retrievePieces('vertical', 1, Line, Column, Board, _, Top_Pieces), 
-																				retrievePieces('vertical', 1, NewLine, Column, Board, _, Bottom_Pieces),
-																				validateCapture('vertical', 0, Symb, Line, Column, Board, Tmp_Board, Top_Pieces, Top_Capt),
-																				validateCapture('vertical', 0, Symb, NewLine, Column, Tmp_Board, NewBoard, Bottom_Pieces, Bottom_Capt), 
-																				Ver_Capt is Top_Capt + Bottom_Capt .
-
-
-% - negativeDiagonal captures
-verifyNegativeDiagonalCaptures(CurrPlayer, Line, Column, Board, NewBoard, Neg_Capt):- 	player(CurrPlayer, Symb, _), 
-																						NewLine is Line - 3,
-																						NewColumn is Column + 3,
-																						retrievePieces('negativeDiagonal', 1, Line, Column, Board, _, Top_Pieces), 
-																						retrievePieces('negativeDiagonal', 1, NewLine, NewColumn, Board, _, Bottom_Pieces), 
-																						validateCapture('negativeDiagonal', 0, Symb, Line, Column, Board, Tmp_Board, Top_Pieces, Top_Capt),
-																						validateCapture('negativeDiagonal', 0, Symb, NewLine, NewColumn, Tmp_Board, NewBoard, Bottom_Pieces, Bottom_Capt), 
-																						Neg_Capt is Top_Capt + Bottom_Capt .
-
-% - positiveDiagonal captures																		
-verifyPositiveDiagonalCaptures(CurrPlayer, Line, Column, Board, NewBoard, Pos_Capt):- 	player(CurrPlayer, Symb, _), 
-																						NewLine is Line - 3,
-																						NewColumn is Column - 3,
-																						retrievePieces('positiveDiagonal', 1, Line, Column, Board, _, Top_Pieces), 
-																						retrievePieces('positiveDiagonal', 1, NewLine, NewColumn, Board, _, Bottom_Pieces), 
-																						validateCapture('positiveDiagonal', 0, Symb, Line, Column, Board, Tmp_Board, Top_Pieces, Top_Capt),
-																						validateCapture('positiveDiagonal', 0, Symb, NewLine, NewColumn, Tmp_Board, NewBoard, Bottom_Pieces, Bottom_Capt), 
-																						Pos_Capt is Top_Capt + Bottom_Capt .
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%
-%% Validates Captures %%
-%%%%%%%%%%%%%%%%%%%%%%%%
-
-validateCapture(Direction, 0, Symb, Line, Column, Board, NewBoard, [H|T], Capt):- 	Symb = H, validateCapture(Direction, 1, Symb, Line, Column, Board, NewBoard, T, Capt).
-validateCapture(Direction, 1, Symb, Line, Column, Board, NewBoard, [H|T], Capt):- 	Symb \= H, Symb \= '#', Symb \= '0',  
-																					validateCapture(Direction, 2, Symb, Line, Column, Board, NewBoard, T, Capt).
-validateCapture(Direction, 2, Symb, Line, Column, Board, NewBoard, [H|T], Capt):- 	Symb \= H, Symb \= '#', Symb \= '0',
-																					validateCapture(Direction, 3, Symb, Line, Column, Board, NewBoard, T, Capt).
-validateCapture('horizontal', 3, Symb, Line, Column, Board, NewBoard, [H|_], Capt):- 	Symb = H,
-																						Col1 is Column + 1, setPiece(Line, Col1, Board, Tmp_Board, '0'),
-																						Col2 is Column + 2, setPiece(Line, Col2, Tmp_Board, NewBoard, '0'),
-																						Capt is 1.
-validateCapture('vertical', 3, Symb, Line, Column, Board, NewBoard, [H|_], Capt):- 	Symb = H,
-																					Lin1 is Line + 1, setPiece(Lin1, Column, Board, Tmp_Board, '0'),
-																					Lin2 is Line + 2, setPiece(Lin2, Column, Tmp_Board, NewBoard, '0'),
-																					Capt is 1.
-validateCapture('negativeDiagonal', 3, Symb, Line, Column, Board, NewBoard, [H|_], Capt):- 	Symb = H,
-																							Lin1 is Line + 1, Col1 is Column - 1, setPiece(Lin1, Col1, Board, Tmp_Board, '0'),
-																							Lin2 is Line + 2, Col2 is Column - 2, setPiece(Lin2, Col2, Tmp_Board, NewBoard, '0'),
-																							Capt is 1.
-validateCapture('positiveDiagonal', 3, Symb, Line, Column, Board, NewBoard, [H|_], Capt):- 	Symb = H,
-																							Lin1 is Line + 1, Col1 is Column + 1, setPiece(Lin1, Col1, Board, Tmp_Board, '0'),
-																							Lin2 is Line + 2, Col2 is Column + 2, setPiece(Lin2, Col2, Tmp_Board, NewBoard, '0'),
-																							Capt is 1.																
-validateCapture(_, _, _, _, _, Board, NewBoard, _, Capt):- 	getPiece(1,1,Board, Piece), 
-															setPiece(1,1,Board, NewBoard, Piece),
-															Capt is 0.
-
-
-%%%%%%%%%%%%%%%%%%%%%
-%% Update Captures %%
-%%%%%%%%%%%%%%%%%%%%%
-
-updatePlayerCaptures(player(CurrPlayer, Curr_Num, Curr_Capt), player(CurrPlayer, Curr_Num, New_Num_Capt), Num_Capt):- New_Num_Capt is Curr_Capt + Num_Capt .
-
-																																						
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%																				
-%% Retrieves a list of X pieces in a certain direction %%	
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% - horizontal direction																		
-retrievePieces(_, 4, Line, Column, Board, OldPieces, NewPieces):-	getPiece(Line, Column, Board, Piece),
-																			append([Piece], OldPieces, NewPieces).
-retrievePieces('horizontal', Iterator, Line, Column, Board, OldPieces, NewPieces):- 	getPiece(Line, Column, Board, Piece),
-																						append([Piece], OldPieces, Pieces),
-																						NewColumn is Column + 1,
-																						NewIterator is Iterator + 1,	
-																						retrievePieces('horizontal', NewIterator, Line, NewColumn, Board, Pieces, NewPieces).
-																						
-% - vertical direction
-retrievePieces('vertical', Iterator, Line, Column, Board, OldPieces, NewPieces):- 	getPiece(Line, Column, Board, Piece),
-																					append([Piece], OldPieces, Pieces),
-																					NewLine is Line + 1,
-																					NewIterator is Iterator + 1,	
-																					retrievePieces('vertical', NewIterator, NewLine, Column, Board, Pieces, NewPieces).	
-
-% - negative diagonal direction																																												
-retrievePieces('negativeDiagonal', Iterator, Line, Column, Board, OldPieces, NewPieces):- 	getPiece(Line, Column, Board, Piece),
-																							append([Piece], OldPieces, Pieces),
-																							NewLine is Line + 1,
-																							NewColumn is Column - 1,
-																							NewIterator is Iterator + 1,
-																							retrievePieces('negativeDiagonal', NewIterator, NewLine, NewColumn, Board, Pieces, NewPieces).		
-																							
-% - positive diagonal direction																																												
-retrievePieces('positiveDiagonal', Iterator, Line, Column, Board, OldPieces, NewPieces):- 	getPiece(Line, Column, Board, Piece), 
-																							append([Piece], OldPieces, Pieces),
-																							NewLine is Line + 1,
-																							NewColumn is Column + 1,
-																							NewIterator is Iterator + 1,
-																							retrievePieces('positiveDiagonal', NewIterator, NewLine, NewColumn, Board, Pieces, NewPieces).																																														
