@@ -363,12 +363,12 @@ checkDraw(Board, player(CurrPlayer, Curr_Num, Curr_Capt), player(NextPlayer, Nex
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Main predicates: updateSequence/6, updateCaptures/7
 
-% Auxiliary predicates: getSequence/5, sequence/8
+% Auxiliary predicates: getSequence/5, getSequence/6, sequence/8, getCaptures/7, capture/8
 
 
 % types of directions and their row and column increment
 direction(horizontal ,  0, 1).
-direction(vertical	 ,  1, 0).
+direction(vertical   ,  1, 0).
 direction(posDiagonal,  1, 1).
 direction(negDiagonal, -1, 1).
 
@@ -377,7 +377,7 @@ direction(negDiagonal, -1, 1).
 
 % Must be called after the board is updated with the player's new piece
 
-% +Piece: 		Model ID of the player's piece.
+% +Piece: 			Model ID of the player's piece.
 % +Board:			Internal Representation of the Board this turn, after being updated.
 % +SetLine:			Line of the cell where the player placed his piece this turn.
 % +SetColumn:		Column of the cell where the player placed his piece this turn.
@@ -391,7 +391,7 @@ updateSequence(Piece, Board, SetLine, SetColumn, CurrSequenceNo, NewSequenceNo) 
 
 % Must be called after the board is updated with the player's new piece
 
-% +Piece: 		Model ID of the player's piece.
+% +Piece: 			Model ID of the player's piece.
 % +Board:			Internal Representation of the Board this turn, after being updated.
 % +SetLine:			Line of the cell where the player placed his piece this turn.
 % +SetColumn:		Column of the cell where the player placed his piece this turn.
@@ -409,7 +409,7 @@ getSequence(Direction, Piece, Board, SetLine, SetColumn, MaxSequenceNo) :-	direc
 																		
 % Calculates the Sequence Number in a direction (including the starting cell) accumulated with an initial value.
 
-% +Piece: 		Model ID of the player's piece.
+% +Piece: 			Model ID of the player's piece.
 % +Board:			Internal Representation of the Board this turn, after being updated.
 % +SetLine:			Line of the cell being processed first.
 % +SetColumn:		Column of the cell being processed first.
@@ -422,10 +422,63 @@ sequence(Piece, Board, SetLine, SetColumn, LineInc, ColInc, InitialValue, Sequen
 																							NewColumn is SetColumn + ColInc,
 																							NewValue is InitialValue + 1,
 																							sequence(Piece, Board, NewLine, NewColumn, LineInc, ColInc, NewValue, SequenceNo).
-
 sequence(_, _, _, _, _, _, SequenceNo, SequenceNo).
 
 
+% Updates the Sapture Number of the player whose turn is being processed.
+
+% Must be called after the board is updated with the current player's new piece
+
+% +CurrPiece: 		Model ID of the current turn's player piece.
+% +NextPiece: 		Model ID of the current player's opponent piece.
+% +Board:			Internal Representation of the Board this turn, after being updated.
+% +SetLine:			Line of the cell where the player placed his piece this turn.
+% +SetColumn:		Column of the cell where the player placed his piece this turn.
+% +CurrCaptureNo: 	Number of captures the current player has before this turn.
+% -NewCaptureNo: 	Number of captures the current player has after this turn.
+updateCaptures(CurrPiece, NextPiece, Board, SetLine, SetColumn, CurrCaptureNo, NewCaptureNo) :- getCaptures(horizontal,  CurrPiece, NextPiece, Board, SetLine, SetColumn, HorizontalCaptureNo),
+																								getCaptures(vertical, 	 CurrPiece, NextPiece, Board, SetLine, SetColumn, VerticalCaptureNo),
+																								getCaptures(posDiagonal, CurrPiece, NextPiece, Board, SetLine, SetColumn, PosDiagonalCaptureNo),
+																								getCaptures(negDiagonal, CurrPiece, NextPiece, Board, SetLine, SetColumn, NegDiagonalCaptureNo),
+																								!,
+																								NewCaptureNo = CurrCaptureNo + HorizontalCaptureNo + VerticalCaptureNo + PosDiagonalCaptureNo + NegDiagonalCaptureNo.
+
+% Calculates the Capture Number in a given direction from a given cell.
+
+% +Direction 	Internal Representation of the direction to be evaluated
+% +CurrPiece: 	Model ID of the current turn's player piece.
+% +NextPiece: 	Model ID of the current player's opponent piece.
+% +Board:		Internal Representation of the Board this turn, after being updated.
+% +SetLine:		Line of the cell where captures are being evaluated (Latest cell to be played by current player).
+% +SetColumn:	Column of the cell where captures are being evaluated (Latest cell to be played by current player).
+% -CaptureNo: 	Number of captures from the given cell and direction.																											
+getCaptures(Direction, CurrPiece, NextPiece, Board, SetLine, SetColumn, CaptureNo) :-	direction(Direction, LineInc, ColInc),
+																						LineDec is -LineInc, ColDec is -ColInc,																						
+																						capture(CurrPiece, NextPiece, Board, SetLine, SetColumn, LineDec, ColDec, LeftCaptureNo), 	% LeftCaptureNo is either 1 or 0.
+																						capture(CurrPiece, NextPiece, Board, SetLine, SetColumn, LineInc, ColInc, RightCaptureNo), 	% LeftCaptureNo is either 1 or 0.
+																						!,
+																						CaptureNo = LeftCaptureNo + RightCaptureNo.
+
+% Checks if there was a capture in a given way from a given cell.
+
+% +CurrPiece: 	Model ID of the current turn's player piece.
+% +NextPiece: 	Model ID of the current player's opponent piece.
+% +Board:		Internal Representation of the Board this turn, after being updated.
+% +Line1:		Line of the the first cell of the capture being evaluated (Corresponds to the latest cell to be played by current player).
+% +Column1:		Column of the the first cell of the capture being evaluated (Corresponds to the latest cell to be played by current player).
+% -CaptureNo: 	Numeric alue stating if there is a capture (1) or not (0).
+capture(CurrPiece, NextPiece, Board, Line1, Column1, LineInc, ColInc, CaptureNo) :- Line2 is Line1 + LineInc, Column2 is Column1 + ColInc,
+																					Line3 is Line2 + LineInc, Column3 is Column2 + ColInc,
+																					Line4 is Line3 + LineInc, Column4 is Column3 + ColInc,
+																					getPiece(Line1, Column1, Board, CurrPiece),
+																					getPiece(Line2, Column2, Board, NextPiece),
+																					getPiece(Line3, Column3, Board, NextPiece),
+																					getPiece(Line4, Column4, Board, CurrPiece),
+																					!,
+																					CaptureNo = 1.
+capture(_, _, _, _, _, _, _, 0).
+
+																					
 % ----- Deprecated stuff (kept till refactor is approved)
 																
 % - horizontal direction
