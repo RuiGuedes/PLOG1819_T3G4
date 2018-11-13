@@ -297,9 +297,9 @@ validateUserInput(Board, Line, Column):-	getPiece(Line, Column, Board, '0').
 % Game End States:						winGame/3, drawGame/3
 
 % Initializes the game in its initial state (Empty Board)
-startGame:- initialBoard(Board),
-			gameStep(Board, player(playerOne, '1', 0, 0), player(playerTwo, '2', 0, 0)).
-
+startGame :- initialBoard(Board),
+			 gameStep(Board, player(playerOne, '1', 0, 0), player(playerTwo, '2', 0, 0)).		
+			 
 
 % Computes a single game state.
 
@@ -317,13 +317,14 @@ gameStep(Board, CurrPlayer, NextPlayer):- 	displayGame(Board),
 % Handles the transition between two board states. 
 % This including updating the board and checking its current status in respect to the game
 
-% +Board:		Internal Representation of the Board in its current state.
-% +NewBoard:	Internal Representation of the Board in its resulting state.
-% +CurrPlayer:	Internal Representation of the Player going to play this turn.
-% +NextPlayer:	Internal Representation of the opponent of the Player playing this turn.
-% +SetLine:		Line of the cell where the player is playing his piece.
-% +SetColumn:	Column of the cell where the player is playing his piece.
-% -Score:		Score of the resulting state (Used to evaluate AI movements and end states) Range:[-100, 100].
+% +Board:		 	Internal Representation of the Board in its current state.
+% -NewBoard:	 	Internal Representation of the Board in its resulting state.
+% +CurrPlayer:	 	Internal Representation of the Player going to play this turn before processing it.
+% +NextPlayer:	 	Internal Representation of the opponent of the Player playing this turn.
+% -NewCurrPlayer:	Internal Representation of the Player going to play this turn after processing it.
+% +SetLine:		 	Line of the cell where the player is playing his piece.
+% +SetColumn:	 	Column of the cell where the player is playing his piece.
+% -Score:		 	Score of the resulting state (Used to evaluate AI movements and end states) Range:[-100, 100].
 boardStep(Board, NewBoard, player(CurrPlayerID, CurrPiece, CurrCaptureNo, CurrSequenceNo), player(_, NextPiece, NextCaptureNo, NextSequenceNo), player(CurrPlayerID, CurrPiece, NewCaptureNo, NewSequenceNo), SetLine, SetColumn, Score) :- 	
 		setPiece(SetLine, SetColumn, Board, SetBoard, CurrPiece),
 		updateSequence(CurrPiece, SetBoard, SetLine, SetColumn, CurrSequenceNo, NewSequenceNo),
@@ -364,6 +365,80 @@ drawGame(Board, _WinningPlayer, _LosingPlayer):- 	displayGame(Board),
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Board Evaluation (AI) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% API: 					choose_move/7, value/5
+
+% Auxiliary Predicates:	valid_moves/2, min_max/9, best_move/
+
+
+% Computes a best move for a certain game state using the minmax algorithm
+
+% +Board:		Internal Representation of the Board in its current state.
+% -NewBoard:	Internal Representation of the Board in its resulting state.
+% +CurrPlayer:	Internal Representation of the Player going to play this turn (AI) before playing.
+% +NextPlayer:	Internal Representation of the opponent of the Player playing this turn.
+% -NewCurrPlayer:	Internal Representation of the Player going to play this turn (AI) after playing.
+% +Depth:		Depth of game states to analyze.
+% -Score:		Score of the resulting state - Range:[-100, 100].
+choose_move(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score) :-	valid_moves(Board, MoveList),
+																						min_max(max, Board, NewBoard, MoveList, CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score).
+
+% Minmax algorithm for finding the best move for a player
+
+% +CompareT			Type of comparison to do in this iteration (max | min).
+% +Board:			Internal Representation of the Board in its current state.
+% -BestBoard:		Internal Representation of the Board in its best resulting state.
+% +MoveList:		List of moves that can be chosen for this layer.
+% +CurrPlayer:		Internal Representation of the Player going to play in this game state before playing.
+% +NextPlayer:		Internal Representation of the opponent of the Player playing in this game state.
+% -BestCurrPlayer:	Internal Representation of the Player going to play in this game state after doing the best play.
+% +Depth:			Depth of game states to analyze.
+% -BestScore:		Score of the best resulting state - Range:[-100, 100].
+min_max(CompareT, 	Board, BestBoard, [M], 		CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore) :-	best_move(CompareT, Board, BestBoard, M, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore), !. 
+min_max(CompareT, 	Board, BestBoard, [M | MS], CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore) :- 	best_move(CompareT, Board, NewBoard1, M, CurrPlayer, NextPlayer, NewCurrPlayer1, Depth, NewScore1),
+																												min_max(CompareT, Board, NewBoard2, MS, CurrPlayer, NextPlayer, NewCurrPlayer2, Depth, NewScore2),
+																												compare_moves(CompareT, NewBoard1, NewCurrPlayer1, NewScore1, 
+																																		NewBoard2, NewCurrPlayer2, NewScore2, 
+																																		BestBoard, BestCurrPlayer, BestScore).
+
+% TODO - Implement best_move (Either does choose_move/7 in lower depth or if depth = 0 uses value/?)
+																																		
+% Compares two game states (Part of MinMax algorithm)
+
+% +CompareT			Type of comparison to do in this iteration (max | min).
+% +NewBoard1:		Internal Representation of the Board in the first state.
+% +NewCurrPlayer1:	Internal Representation of the Player in the first state.
+% +NewScore1:		Score of the first state - Range:[-100, 100].
+% +NewBoard1:		Internal Representation of the Board in the second state.
+% +NewCurrPlayer1:	Internal Representation of the Player in the second state.
+% +NewScore1:		Score of the second state - Range:[-100, 100].
+% -BestBoard:		Internal Representation of the best of both boards.
+% -BestCurrPlayer:	Internal Representation of the Player in the best of both states.
+% -BestScore:		Score of the best of both states - Range:[-100, 100].
+compare_moves(max, NewBoard1, NewCurrPlayer1, NewScore1, _, _, NewScore2, NewBoard1, NewCurrPlayer1, NewScore1) :- NewScore1 > NewScore2, !.
+compare_moves(min, NewBoard1, NewCurrPlayer1, NewScore1, _, _, NewScore2, NewBoard1, NewCurrPlayer1, NewScore1) :- NewScore1 < NewScore2, !.
+compare_moves(_, _, _, _, NewBoard2, NewCurrPlayer2, NewScore2, NewBoard2, NewCurrPlayer2, NewScore2). % In the other remaining options, the second score is better.
+
+
+% Creates a list with the valid moves given the current state of the board
+
+% Since the restrictions of moves are the same for both players, independently of the board state, this doesn't depend on the player executing the move.
+
+% +Board:	Internal Representation of the Board to be evaluated.
+% +MoveList	List containing the possible moves to be executed.
+valid_moves(Board, MoveList) :- boardSize(Board, LineSize, ColSize),
+								valid_moves(Board, MoveList, LineSize, ColSize, ColSize).
+
+% Iterate by Decrementing the Column and Line. Use a separate value to keep track of ColSize so you can reset the Column Number for the next Line.
+valid_moves(_, [], 0, _, _, _).
+valid_moves(Board, MoveList, LineSize, ColSize, 0) :- 	DecLine is LineSize - 1,
+														valid_moves(Board, MoveList, DecLine, ColSize, ColSize).
+valid_moves(Board, [move(LineSize, ColNum) | MoveList], LineSize, ColSize, ColNum) :- 	getPiece(LineSize, ColNum, Board, '0'),
+																						!,
+																						DecColNum is ColNum - 1,
+																						valid_moves(Board, MoveList, LineSize, ColSize, DecColNum).																						
+valid_moves(Board, MoveList, LineSize, ColSize, ColNum) :- 	IncColNum is ColNum + 1,
+															valid_moves(Board, MoveList, LineSize, ColSize, IncColNum).
+													
 
 % Computes the score of a game state to quantify how well the game is for a player
 
