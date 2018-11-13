@@ -307,10 +307,11 @@ startGame:- initialBoard(Board),
 % +CurrPlayer:	ID of the Player going to play this turn
 % +NextPlayer:	ID of this turn's player opponent.
 gameStep(Board, CurrPlayer, NextPlayer):- 	displayGame(Board),	
-											displayPlayerCaptInfo(CurrPlayer, NextPlayer), 
-											handleInput(Board, CurrPlayer, Line, Column),
-											boardStep(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, Score),											
-											nextGameStep(NewBoard, NextPlayer, NewCurrPlayer, Score).
+											displayPlayerCaptInfo(CurrPlayer, NextPlayer),
+											!,
+											handleInput(Board, CurrPlayer, Line, Column), !,
+											boardStep(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, Score),	!,
+											nextGameStep(NewBoard, NextPlayer, NewCurrPlayer, Score), !.
 
 
 % Handles the transition between two board states. 
@@ -324,9 +325,9 @@ gameStep(Board, CurrPlayer, NextPlayer):- 	displayGame(Board),
 % +SetColumn:	Column of the cell where the player is playing his piece.
 % -Score:		Score of the resulting state (Used to evaluate AI movements and end states) Range:[-100, 100].
 boardStep(Board, NewBoard, player(CurrPlayerID, CurrPiece, CurrCaptureNo, CurrSequenceNo), player(_, NextPiece, NextCaptureNo, NextSequenceNo), player(CurrPlayerID, CurrPiece, NewCaptureNo, NewSequenceNo), SetLine, SetColumn, Score) :- 	
-		setPiece(SetLine, SetColumn, Board, NewBoard, CurrPiece),
-		updateSequence(CurrPiece, NewBoard, SetLine, SetColumn, CurrSequenceNo, NewSequenceNo),
-		updateCaptures(CurrPiece, NextPiece, NewBoard, SetLine, SetColumn, CurrCaptureNo, NewCaptureNo),
+		setPiece(SetLine, SetColumn, Board, SetBoard, CurrPiece),
+		updateSequence(CurrPiece, SetBoard, SetLine, SetColumn, CurrSequenceNo, NewSequenceNo),
+		updateCaptures(CurrPiece, NextPiece, SetBoard, NewBoard, SetLine, SetColumn, CurrCaptureNo, NewCaptureNo),
 		value(NewCaptureNo, NewSequenceNo, NextCaptureNo, NextSequenceNo, Score). 
 
 % Handles the transition between two game states		
@@ -348,8 +349,7 @@ nextGameStep(NewBoard, NewCurrPlayer, NewNextPlayer, _) 	:- 	gameStep(NewBoard, 
 % +WinningPlayer:	Internal Representation of the Player who won the game.
 % +LosingPlayer:	Internal Representation of the Player who lost the game.
 winGame(Board, player(_, Num, _, _), _LosingPlayer):- 	displayGame(Board),
-														modelToView(Num, Symb),
-														format('-> Victory: Player ~p won the game!~n~n', [Num, Symb]).
+														format('-> Victory: Player ~p won the game!~n~n', Num).
 
 % Ends the game, displaying the final state of the board and final stats of the players
 
@@ -371,7 +371,7 @@ drawGame(Board, _WinningPlayer, _LosingPlayer):- 	displayGame(Board),
 % +CurrSequenceNo:	Number of pieces in a row the current turn's player has
 % +NextSequenceNo:	Number of pieces in a row the current player's opponent has.
 % -Score:			Score attributed to the game state in the interval [-100, 100], where a maximal score represents a better state for the current player.
-value(CurrCaptureNo, CurrSequenceNo, _, _, 100)								:-	(CurrCaptureNo >= 1 ; CurrSequenceNo >= 5).
+value(CurrCaptureNo, CurrSequenceNo, _, _, 100)								:-	(CurrCaptureNo >= 10 ; CurrSequenceNo >= 5).
 value(_, _, NextCaptureNo, NextSequenceNo, -100) 							:-	(NextCaptureNo >= 10 ; NextSequenceNo >= 5).
 value(CurrCaptureNo, CurrSequenceNo, NextCaptureNo, NextSequenceNo, Score) 	:-	Score = CurrCaptureNo - NextCaptureNo + CurrSequenceNo - NextSequenceNo.
 				
@@ -458,49 +458,54 @@ sequence(_, _, _, _, _, _, SequenceNo, SequenceNo).
 
 % +CurrPiece: 		Model ID of the current turn's player piece.
 % +NextPiece: 		Model ID of the current player's opponent piece.
-% +Board:			Internal Representation of the Board this turn, after being updated.
+% +Board:			Internal Representation of the Board this turn, before being updated with the captures.
+% +NewBoard:		Internal Representation of the Board this turn, after being updated with the captures.
 % +SetLine:			Line of the cell where the player placed his piece this turn.
 % +SetColumn:		Column of the cell where the player placed his piece this turn.
 % +CurrCaptureNo: 	Number of captures the current player has before this turn.
 % -NewCaptureNo: 	Number of captures the current player has after this turn.
-updateCaptures(CurrPiece, NextPiece, Board, SetLine, SetColumn, CurrCaptureNo, NewCaptureNo) :- getCaptures(horizontal,  CurrPiece, NextPiece, Board, SetLine, SetColumn, HorizontalCaptureNo),
-																								getCaptures(vertical, 	 CurrPiece, NextPiece, Board, SetLine, SetColumn, VerticalCaptureNo),
-																								getCaptures(posDiagonal, CurrPiece, NextPiece, Board, SetLine, SetColumn, PosDiagonalCaptureNo),
-																								getCaptures(negDiagonal, CurrPiece, NextPiece, Board, SetLine, SetColumn, NegDiagonalCaptureNo),
-																								!,
-																								NewCaptureNo is CurrCaptureNo + HorizontalCaptureNo + VerticalCaptureNo + PosDiagonalCaptureNo + NegDiagonalCaptureNo.
+updateCaptures(CurrPiece, NextPiece, Board, NewBoard, SetLine, SetColumn, CurrCaptureNo, NewCaptureNo) :- 	getCaptures(horizontal,  CurrPiece, NextPiece, Board,  Board1, 	 SetLine, SetColumn, HorizontalCaptureNo),
+																											getCaptures(vertical, 	 CurrPiece, NextPiece, Board1, Board2, 	 SetLine, SetColumn, VerticalCaptureNo),
+																											getCaptures(posDiagonal, CurrPiece, NextPiece, Board2, Board3, 	 SetLine, SetColumn, PosDiagonalCaptureNo),
+																											getCaptures(negDiagonal, CurrPiece, NextPiece, Board3, NewBoard, SetLine, SetColumn, NegDiagonalCaptureNo),
+																											!,
+																											NewCaptureNo is CurrCaptureNo + HorizontalCaptureNo + VerticalCaptureNo + PosDiagonalCaptureNo + NegDiagonalCaptureNo.
 
 % Calculates the Capture Number in a given direction from a given cell.
 
 % +Direction 	Internal Representation of the direction to be evaluated
 % +CurrPiece: 	Model ID of the current turn's player piece.
 % +NextPiece: 	Model ID of the current player's opponent piece.
-% +Board:		Internal Representation of the Board this turn, after being updated.
+% +Board:		Internal Representation of the Board this turn, before being updated with the captures.
+% +NewBoard:	Internal Representation of the Board this turn, after being updated with the captures.
 % +SetLine:		Line of the cell where captures are being evaluated (Latest cell to be played by current player).
 % +SetColumn:	Column of the cell where captures are being evaluated (Latest cell to be played by current player).
 % -CaptureNo: 	Number of captures from the given cell and direction.																											
-getCaptures(Direction, CurrPiece, NextPiece, Board, SetLine, SetColumn, CaptureNo) :-	direction(Direction, LineInc, ColInc),
-																						LineDec is -LineInc, ColDec is -ColInc,																						
-																						capture(CurrPiece, NextPiece, Board, SetLine, SetColumn, LineDec, ColDec, LeftCaptureNo), 	% LeftCaptureNo is either 1 or 0.
-																						capture(CurrPiece, NextPiece, Board, SetLine, SetColumn, LineInc, ColInc, RightCaptureNo), 	% LeftCaptureNo is either 1 or 0.
-																						!,
-																						CaptureNo is LeftCaptureNo + RightCaptureNo.
+getCaptures(Direction, CurrPiece, NextPiece, Board, NewBoard, SetLine, SetColumn, CaptureNo) :-	direction(Direction, LineInc, ColInc),
+																								LineDec is -LineInc, ColDec is -ColInc,
+																								capture(CurrPiece, NextPiece, Board,  Board1,   SetLine, SetColumn, LineDec, ColDec, LeftCaptureNo),  % LeftCaptureNo is either 1 or 0.
+																								capture(CurrPiece, NextPiece, Board1, NewBoard, SetLine, SetColumn, LineInc, ColInc, RightCaptureNo), % LeftCaptureNo is either 1 or 0.
+																								!,
+																								CaptureNo is LeftCaptureNo + RightCaptureNo.
 
 % Checks if there was a capture in a given way from a given cell.
 
 % +CurrPiece: 	Model ID of the current turn's player piece.
 % +NextPiece: 	Model ID of the current player's opponent piece.
-% +Board:		Internal Representation of the Board this turn, after being updated.
+% +Board:		Internal Representation of the Board this turn, before being updated with the captures.
+% +NewBoard:	Internal Representation of the Board this turn, after being updated with the captures.
 % +Line1:		Line of the the first cell of the capture being evaluated (Corresponds to the latest cell to be played by current player).
 % +Column1:		Column of the the first cell of the capture being evaluated (Corresponds to the latest cell to be played by current player).
 % -CaptureNo: 	Numeric alue stating if there is a capture (1) or not (0).
-capture(CurrPiece, NextPiece, Board, Line1, Column1, LineInc, ColInc, CaptureNo) :- Line2 is Line1 + LineInc, Column2 is Column1 + ColInc,
-																					Line3 is Line2 + LineInc, Column3 is Column2 + ColInc,
-																					Line4 is Line3 + LineInc, Column4 is Column3 + ColInc,
-																					getPiece(Line1, Column1, Board, CurrPiece),
-																					getPiece(Line2, Column2, Board, NextPiece),
-																					getPiece(Line3, Column3, Board, NextPiece),
-																					getPiece(Line4, Column4, Board, CurrPiece),
-																					!,
-																					CaptureNo = 1.
-capture(_, _, _, _, _, _, _, 0).
+capture(CurrPiece, NextPiece, Board, NewBoard, Line1, Column1, LineInc, ColInc, 1) :- 	Line2 is Line1 + LineInc, Column2 is Column1 + ColInc,
+																						Line3 is Line2 + LineInc, Column3 is Column2 + ColInc,
+																						Line4 is Line3 + LineInc, Column4 is Column3 + ColInc,
+																						getPiece(Line1, Column1, Board, CurrPiece),
+																						getPiece(Line2, Column2, Board, NextPiece),
+																						getPiece(Line3, Column3, Board, NextPiece),
+																						getPiece(Line4, Column4, Board, CurrPiece),
+																						!,																			
+																						setPiece(Line2, Column2, Board,  Board1,   '0'),
+																						setPiece(Line3, Column3, Board1, NewBoard, '0'),
+																						!.
+capture(_, _, Board, Board, _, _, _, _, 0).
