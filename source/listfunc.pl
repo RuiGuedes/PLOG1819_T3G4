@@ -483,81 +483,26 @@ capture(_, _, Board, Board, _, _, _, _, 0).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Board Evaluation (AI) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% API: 					choose_move/7, value/5
+% API: 					choose_move/6, value/5
 
-% Auxiliary Predicates:	valid_moves/2, min_max/9, move/9
+% Auxiliary Predicates:	valid_moves/2, minimax/7, move/6
 
 
 % Computes a best move for a certain game state using the minmax algorithm
 
 % +Board:		Internal Representation of the Board in its current state.
-% -NewBoard:	Internal Representation of the Board in its resulting state.
-% +CurrPlayer:	Internal Representation of the Player going to play this turn (AI) before playing.
+% -BestBoard:		Internal Representation of the Board in its best resulting state.
+% +CurrPlayer:	Internal Representation of the Player going to play this turn (AI).
 % +NextPlayer:	Internal Representation of the opponent of the Player playing this turn.
-% -NewCurrPlayer:	Internal Representation of the Player going to play this turn (AI) after playing.
+% -BestCurrPlayer:	Internal Representation of the Player going to play in this game state after doing the best play.
 % +Depth:		Depth of game states to analyze.
 % -Score:		Score of the resulting state - Range:[-100, 100].
-choose_move(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score) :- choose_move(max, Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score).
+choose_move(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, Score) :-	valid_moves(Board, MoveList),
+																						minimax(Board, BestBoard, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, Score).
 
-choose_move(CompareT, Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score) :-	valid_moves(Board, MoveList),
-																								min_max(CompareT, Board, NewBoard, MoveList, CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score).
-
-% Minmax algorithm for finding the best move for a player
-
-% +CompareT			Type of comparison to do in this iteration (max | min).
-% +Board:			Internal Representation of the Board in its current state.
-% -BestBoard:		Internal Representation of the Board in its best resulting state.
-% +MoveList:		List of moves that can be chosen for this layer.
-% +CurrPlayer:		Internal Representation of the Player going to play in this game state before playing.
-% +NextPlayer:		Internal Representation of the opponent of the Player playing in this game state.
-% -BestCurrPlayer:	Internal Representation of the Player going to play in this game state after doing the best play.
-% +Depth:			Depth of game states to analyze.
-% -BestScore:		Score of the best resulting state - Range:[-100, 100].
-min_max(CompareT, 	Board, BestBoard, [M], 		CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore) :-	move(CompareT, Board, BestBoard, M, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore), !. 
-min_max(CompareT, 	Board, BestBoard, [M | MS], CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore) :- 	move(CompareT, Board, NewBoard1, M, CurrPlayer, NextPlayer, NewCurrPlayer1, Depth, NewScore1),
-																												min_max(CompareT, Board, NewBoard2, MS, CurrPlayer, NextPlayer, NewCurrPlayer2, Depth, NewScore2),
-																												compare_moves(CompareT, NewBoard1, NewCurrPlayer1, NewScore1, 
-																																		NewBoard2, NewCurrPlayer2, NewScore2, 
-																																		BestBoard, BestCurrPlayer, BestScore).
-
-% Analyses a move.
-
-% Depending on the depth of choices to consider, choose_move is called recursivel
-
-% +CompareT			Type of comparison to do in minmax algorithm (if depth > 0), (max | min).
-% +Board:			Internal Representation of the Board in its current state.
-% -NewBoard:		Internal Representation of the Board in the resulting state.
-% +Move:			Moves to be applied.
-% +CurrPlayer:		Internal Representation of the Player going to play in this game state before playing.
-% +NextPlayer:		Internal Representation of the opponent of the Player playing in this game state.
-% -NewCurrPlayer:	Internal Representation of the Player going to play in this game state after doing its play.
-% +Depth:			Depth of game states to analyze.
-% -Score:			Score of the resulting state - Range:[-100, 100].
-move(_, 		Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCurrPlayer, 0, 		Score) :-	boardStep(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, Score), !.
-move(CompareT, 	Board, NewBoard, move(Line, Column), player(CurrPlayerID, CurrPiece, CurrCaptureNo, CurrSequenceNo), NextPlayer, NewCurrPlayer, Depth, 	Score) :-	
-																	setPiece(Board, UpdatedBoard, Line, Column, CurrPiece),
-																	DecDepth is Depth - 1, !,
-																	choose_move(CompareT, UpdatedBoard, NewBoard, player(CurrPlayerID, CurrPiece, CurrCaptureNo, CurrSequenceNo), NextPlayer, NewCurrPlayer, DecDepth, Score), !.
-						
-% Compares two game states (Part of MinMax algorithm)
-
-% +CompareT			Type of comparison to do in this iteration (max | min).
-% +NewBoard1:		Internal Representation of the Board in the first state.
-% +NewCurrPlayer1:	Internal Representation of the Player in the first state.
-% +NewScore1:		Score of the first state - Range:[-100, 100].
-% +NewBoard1:		Internal Representation of the Board in the second state.
-% +NewCurrPlayer1:	Internal Representation of the Player in the second state.
-% +NewScore1:		Score of the second state - Range:[-100, 100].
-% -BestBoard:		Internal Representation of the best of both boards.
-% -BestCurrPlayer:	Internal Representation of the Player in the best of both states.
-% -BestScore:		Score of the best of both states - Range:[-100, 100].
-compare_moves(max, NewBoard1, NewCurrPlayer1, NewScore1, _, _, NewScore2, NewBoard1, NewCurrPlayer1, NewScore1) :- NewScore1 > NewScore2, !.
-compare_moves(min, NewBoard1, NewCurrPlayer1, NewScore1, _, _, NewScore2, NewBoard1, NewCurrPlayer1, NewScore1) :- NewScore1 < NewScore2, !.
-compare_moves(_, _, _, _, NewBoard2, NewCurrPlayer2, NewScore2, NewBoard2, NewCurrPlayer2, NewScore2). % In the other remaining options, the second score is better.
-
-
+																		
 % Creates a list with the valid moves given the current state of the board
-
+																		
 % Since the restrictions of moves are the same for both players, independently of the board state, this doesn't depend on the player executing the move.
 
 % +Board:	Internal Representation of the Board to be evaluated.
@@ -573,16 +518,71 @@ valid_moves(Board, [move(LineSize, ColNum) | MoveList], LineSize, ColSize, ColNu
 																						!,
 																						DecColNum is ColNum - 1,
 																						valid_moves(Board, MoveList, LineSize, ColSize, DecColNum).																						
-valid_moves(Board, MoveList, LineSize, ColSize, ColNum) :- 	IncColNum is ColNum + 1,
-															valid_moves(Board, MoveList, LineSize, ColSize, IncColNum).
+valid_moves(Board, MoveList, LineSize, ColSize, ColNum) :- 	DecColNum is ColNum - 1,
+															valid_moves(Board, MoveList, LineSize, ColSize, DecColNum).
+															
+															
+% Minmax algorithm for finding the best move for a player
+
+% +Board:			Internal Representation of the Board in its current state.
+% -BestBoard:		Internal Representation of the Board in its best resulting state.
+% +MoveList:		List of moves that can be chosen for this layer.
+% +CurrPlayer:		Internal Representation of the Player going to play in this game state before playing.
+% +NextPlayer:		Internal Representation of the opponent of the Player playing in this game state.
+% -BestCurrPlayer:	Internal Representation of the Player going to play in this game state after doing the best play.
+% +Depth:			Depth of game states to analyze.
+% -BestScore:		Score of the best resulting state - Range:[-100, 100].
+minimax(Board, BestBoard, [M], 	    CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore) :- move(Board, BestBoard, M, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore), !. 
+minimax(Board, BestBoard, [M | MS], CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore) :- move(Board, NewBoard1, M, CurrPlayer, NextPlayer, NewCurrPlayer1, Depth, NewScore1),
+																								 minimax(Board, NewBoard2, MS, CurrPlayer, NextPlayer, NewCurrPlayer2, Depth, NewScore2),
+																								 compare_moves(	NewBoard1, NewCurrPlayer1, NewScore1, 
+																												NewBoard2, NewCurrPlayer2, NewScore2,
+																												BestBoard, BestCurrPlayer, BestScore).
+
+% Analyses a move.
+
+% Depending on the depth of choices to consider, choose_move is called recursively
+
+% +Board:			Internal Representation of the Board in its current state.
+% -NewBoard:		Internal Representation of the Board in its resulting state.
+% +Move:			Move to be applied.
+% +CurrPlayer:		Internal Representation of the Player going to play in this game state before playing.
+% +NextPlayer:		Internal Representation of the opponent of the Player playing in this game state.
+% -NewCurrPlayer:	Internal Representation of the Player going to play in this game state after playing.
+% +Depth:			Depth of game states to analyze.
+% -Score:			Score of the resulting state - Range:[-100, 100].
+move(Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCurrPlayer, 0, 	Score):- boardStep(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, Score), !. % Board step inherently calls value.
+move(Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score):- boardStep(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, _),
+																								 DecDepth is Depth - 1,
+																								 % Due to the nature of the value function, we can simply swap the players and negate its maximum score to get the minimum.
+																								 choose_move(NewBoard, _, NextPlayer, NewCurrPlayer, _, DecDepth, NegScore),
+																								 Score is -NegScore.
+						
+% Compares two game states (Part of MinMax algorithm)
+
+% +NewBoard1:		Internal Representation of the Board in the first state.
+% +NewCurrPlayer1:	Internal Representation of the Player in the first state.
+% +NewScore1:		Score of the first state - Range: [-100, 100].
+
+% +NewBoard2:		Internal Representation of the Board in the second state.
+% +NewCurrPlayer2:	Internal Representation of the Player in the second state.
+% +NewScore2:		Score of the second state - Range: [-100, 100].
+
+% -BestBoard:		Internal Representation of the best of both boards.
+% -BestCurrPlayer:	Internal Representation of the Player in the best of both states.
+% -BestScore:		Score of the best of both states - Range: [-100, 100].
+compare_moves(NewBoard1, NewCurrPlayer1, NewScore1, _, _, NewScore2, NewBoard1, NewCurrPlayer1, NewScore1) :- NewScore1 > NewScore2, !.
+compare_moves(_, _, _, NewBoard2, NewCurrPlayer2, NewScore2, NewBoard2, NewCurrPlayer2, NewScore2).
+
 													
 
 % Computes the score of a game state to quantify how well the game is for a player
 
-% +CurrCaptureNo:	Number of captures by the current turn's player
-% +CurrSequenceNo:	Number of pieces in a row the current turn's player has
+% +CurrCaptureNo:	Number of captures by the current turn's player.
+% +CurrSequenceNo:	Number of pieces in a row the current turn's player has.
+% +NextCaptureNo:	Number of captures by the current player's opponent.
 % +NextSequenceNo:	Number of pieces in a row the current player's opponent has.
 % -Score:			Score attributed to the game state in the interval [-100, 100], where a maximal score represents a better state for the current player.
 value(CurrCaptureNo, CurrSequenceNo, _, _, 100)								:-	(CurrCaptureNo >= 10 ; CurrSequenceNo >= 5).
 value(_, _, NextCaptureNo, NextSequenceNo, -100) 							:-	(NextCaptureNo >= 10 ; NextSequenceNo >= 5).
-value(CurrCaptureNo, CurrSequenceNo, NextCaptureNo, NextSequenceNo, Score) 	:-	Score = CurrCaptureNo - NextCaptureNo + CurrSequenceNo - NextSequenceNo.
+value(CurrCaptureNo, CurrSequenceNo, NextCaptureNo, NextSequenceNo, Score) 	:-	Score = CurrCaptureNo - NextCaptureNo + CurrSequenceNo - NextSequenceNo .
