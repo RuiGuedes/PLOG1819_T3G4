@@ -79,14 +79,15 @@ fullLine([H|T]):-	H \= '0',
 %	+LinNo: Row number for the cell to be retrieved.
 %  	+ColNo: Row number for the cell to be retrieved.
 %	+Board: Internal Representation of the board.
-%	-Piece: Cell value retrieved from the board
+%	?Piece: Cell value retrieved from the board
 getPiece(LinNo, ColNo, Board, Piece):-	boardSize(Board, LineSize, ColSize),
 										LinNo >= 1, LinNo =< LineSize,
 										ColNo >= 1, ColNo =< ColSize,
+										!,
 										getLine(LinNo, Board, Line), 
-										getColumn(ColNo, Line, Piece).
+										getColumn(ColNo, Line, Piece), !.
 	
-getPiece(_, _, _, Piece):- 				modelToView(Piece, '#').
+getPiece(_, _, _, Piece):- 				modelToView(Piece, '#'), !.
 
 % Retrieves a Line from a given board.
 
@@ -226,8 +227,8 @@ dispSepLine(Size):- 	write('|  '),
 						
 
 % Displays information about each players' number of captures 						
-displayPlayerCaptInfo(player(playerOne, _, P1Captures, _), player(playerTwo, _, P2Captures, _)):-	format('   Player One -> [~p] Captures    ', P1Captures), 
-																									format('   Player Two -> [~p] Captures~n~n', P2Captures).
+displayPlayerCaptInfo(player(_, '1', P1Captures, _), player(_, '2', P2Captures, _)):-	format('   Player One -> [~p] Captures    ', P1Captures), 
+																						format('   Player Two -> [~p] Captures~n~n', P2Captures).
 displayPlayerCaptInfo(PlayerTwo, PlayerOne):- displayPlayerCaptInfo(PlayerOne, PlayerTwo).																								
 						
 						
@@ -282,22 +283,33 @@ validateUserInput(Board, Line, Column):-	getPiece(Line, Column, Board, '0').
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Game State Transitions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Game Initial State:					startGame/0
+% Game Initial State:					startGame/0, startGame/1, startGame/2
 % Game State Handling and Transition:	gameStep/3, nextGameStep/4
 % Board State Handling and Transition: 	boardStep/7
 % Game End States:						winGame/3, drawGame/3
 
 % Initializes the game in its initial state (Empty Board)
 startGame :- initialBoard(Board),
-			 gameStep(Board, player(playerOne, '1', 0, 0), player(playerTwo, '2', 0, 0)).		
+			 gameStep(Board, player(playerOne, '1', 0, 0), player(playerTwo, '2', 0, 0)).
 			 
+startGame(AIType) :- initialBoard(Board),
+					 gameStep(Board, player(playerOne, '1', 0, 0), player(AIType, '2', 0, 0)).
+
+startGame(AIType1, AIType2) :- initialBoard(Board),
+							   gameStep(Board, player(AIType1, '1', 0, 0), player(AIType2, '2', 0, 0)).
 
 % Computes a single game state.
 
 % +Board: 		Internal Representation of the Board in its current state.
 % +CurrPlayer:	ID of the Player going to play this turn
 % +NextPlayer:	ID of this turn's player opponent.
-gameStep(Board, CurrPlayer, NextPlayer):- 	displayGame(Board),	
+% +Limit:		Limits the board to optimize the AI (to avoid processing unnecessary cells)
+gameStep(Board, CurrPlayer, NextPlayer) :- 	aiDepth(CurrPlayer, Depth), % If the CurrPlayer is an AI, this will succeed and return the depth depending on the AI type (Difficulty)
+											!,
+											choose_move(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score),
+											nextGameStep(NewBoard, NextPlayer, NewCurrPlayer, Score), !.
+
+gameStep(Board, CurrPlayer, NextPlayer) :- 	displayGame(Board),	
 											displayPlayerCaptInfo(CurrPlayer, NextPlayer),
 											!,
 											handleInput(Board, CurrPlayer, Line, Column), !,
@@ -483,22 +495,34 @@ capture(_, _, Board, Board, _, _, _, _, 0).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Board Evaluation (AI) %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% API: 					choose_move/6, value/5
+% API: 					aiDepth/2, choose_move/7, value/5
 
-% Auxiliary Predicates:	valid_moves/2, minimax/7, move/6
+% Auxiliary Predicates:	valid_moves/2, minimax/8, move/8, compare_moves/9
+
+
+% Corresponds the AI type with its depth (Bigger depth -> Higher Difficulty).
+
+% It fails if the given player is not a valid AI type (i.e. Is a human player).
+
+% Player:	Internal Representation of the Player (AI).
+% Depth:	Depth searched by the AI to calculate its move.
+aiDepth(player(easyAI, _, _, _),   1).
+aiDepth(player(mediumAI, _, _, _), 2).
+aiDepth(player(hardAI, _, _, _),   3).
 
 
 % Computes a best move for a certain game state using the minmax algorithm
 
-% +Board:		Internal Representation of the Board in its current state.
+% +Board:			Internal Representation of the Board in its current state.
 % -BestBoard:		Internal Representation of the Board in its best resulting state.
-% +CurrPlayer:	Internal Representation of the Player going to play this turn (AI).
-% +NextPlayer:	Internal Representation of the opponent of the Player playing this turn.
+% +CurrPlayer:		Internal Representation of the Player going to play this turn (AI).
+% +NextPlayer:		Internal Representation of the opponent of the Player playing this turn.
 % -BestCurrPlayer:	Internal Representation of the Player going to play in this game state after doing the best play.
-% +Depth:		Depth of game states to analyze.
-% -Score:		Score of the resulting state - Range:[-100, 100].
-choose_move(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, Score) :-	valid_moves(Board, MoveList),
-																						minimax(Board, BestBoard, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, Score).
+% +Depth:			Depth of game states to analyze.
+% -Score:			Score of the resulting state - Range:[-100, 100].
+choose_move(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, Score) :- choose_move(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, Score, -100, 100). % Initial values of Alpha and Beta
+choose_move(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, Score, Alpha, Beta) :-	valid_moves(Board, MoveList),
+																									minimax(Board, BestBoard, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, Score, Alpha, Beta).
 
 																		
 % Creates a list with the valid moves given the current state of the board
@@ -511,16 +535,16 @@ valid_moves(Board, MoveList) :- boardSize(Board, LineSize, ColSize),
 								valid_moves(Board, MoveList, LineSize, ColSize, ColSize).
 
 % Iterate by Decrementing the Column and Line. Use a separate value to keep track of ColSize so you can reset the Column Number for the next Line.
-valid_moves(_, [], 0, _, _, _).
+valid_moves(_, [], 0, _, _).
 valid_moves(Board, MoveList, LineSize, ColSize, 0) :- 	DecLine is LineSize - 1,
-														valid_moves(Board, MoveList, DecLine, ColSize, ColSize).
+														valid_moves(Board, MoveList, DecLine, ColSize, ColSize), !.
+
 valid_moves(Board, [move(LineSize, ColNum) | MoveList], LineSize, ColSize, ColNum) :- 	getPiece(LineSize, ColNum, Board, '0'),
 																						!,
 																						DecColNum is ColNum - 1,
-																						valid_moves(Board, MoveList, LineSize, ColSize, DecColNum).																						
+																						valid_moves(Board, MoveList, LineSize, ColSize, DecColNum).
 valid_moves(Board, MoveList, LineSize, ColSize, ColNum) :- 	DecColNum is ColNum - 1,
 															valid_moves(Board, MoveList, LineSize, ColSize, DecColNum).
-															
 															
 % Minmax algorithm for finding the best move for a player
 
@@ -532,12 +556,25 @@ valid_moves(Board, MoveList, LineSize, ColSize, ColNum) :- 	DecColNum is ColNum 
 % -BestCurrPlayer:	Internal Representation of the Player going to play in this game state after doing the best play.
 % +Depth:			Depth of game states to analyze.
 % -BestScore:		Score of the best resulting state - Range:[-100, 100].
-minimax(Board, BestBoard, [M], 	    CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore) :- move(Board, BestBoard, M, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore), !. 
-minimax(Board, BestBoard, [M | MS], CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore) :- move(Board, NewBoard1, M, CurrPlayer, NextPlayer, NewCurrPlayer1, Depth, NewScore1),
-																								 minimax(Board, NewBoard2, MS, CurrPlayer, NextPlayer, NewCurrPlayer2, Depth, NewScore2),
-																								 compare_moves(	NewBoard1, NewCurrPlayer1, NewScore1, 
-																												NewBoard2, NewCurrPlayer2, NewScore2,
-																												BestBoard, BestCurrPlayer, BestScore).
+
+% Initialize with accumulators (Necessary to detect Alpha-Beta Cuts).
+minimax(Board, BestBoard, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore, Alpha, Beta) :- minimax(Board, BestBoard, _, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, _, Depth, BestScore, -100, Alpha, Beta).
+
+minimax(_	 , BestBoard, BestBoard, []		 , _		 , _		 , BestCurrPlayer, BestCurrPlayer, _	, BestScore, BestScore, _	 , _).
+minimax(Board, BestBoard, AccBoard,  [M | MS], CurrPlayer, NextPlayer, BestCurrPlayer, AccCurrPlayer,  Depth, BestScore, AccScore,  Alpha, Beta) :- 
+																						move(Board, NewBoard1, M, CurrPlayer, NextPlayer, NewCurrPlayer1, Depth, NewScore1, Alpha, Beta),
+																						compare_moves(	NewBoard1, NewCurrPlayer1, NewScore1, 
+																										AccBoard,  AccCurrPlayer,  AccScore,
+																										MaxBoard,  MaxCurrPlayer,  MaxScore),
+																						!,
+																						max(NewAlpha, [Alpha, MaxScore]),
+																						pruning(Board, BestBoard, MaxBoard, MS, CurrPlayer, NextPlayer, BestCurrPlayer, MaxCurrPlayer, Depth, BestScore, MaxScore, NewAlpha, Beta).
+																						
+
+pruning(_, MaxBoard, MaxBoard, _, _, _, MaxCurrPlayer, MaxCurrPlayer, _, MaxScore, MaxScore, Alpha, Beta) :- Alpha >= Beta, !. % No need to keep processing the tree, we can stop here.
+																						
+pruning(Board, BestBoard, MaxBoard, MS, CurrPlayer, NextPlayer, BestCurrPlayer, MaxCurrPlayer, Depth, BestScore, MaxScore, Alpha, Beta) :-			
+			minimax(Board, BestBoard, MaxBoard, MS, CurrPlayer, NextPlayer, BestCurrPlayer, MaxCurrPlayer, Depth, BestScore, MaxScore, Alpha, Beta).																						
 
 % Analyses a move.
 
@@ -551,12 +588,15 @@ minimax(Board, BestBoard, [M | MS], CurrPlayer, NextPlayer, BestCurrPlayer, Dept
 % -NewCurrPlayer:	Internal Representation of the Player going to play in this game state after playing.
 % +Depth:			Depth of game states to analyze.
 % -Score:			Score of the resulting state - Range:[-100, 100].
-move(Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCurrPlayer, 0, 	Score):- boardStep(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, Score), !. % Board step inherently calls value.
-move(Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score):- boardStep(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, _),
-																								 DecDepth is Depth - 1,
-																								 % Due to the nature of the value function, we can simply swap the players and negate its maximum score to get the minimum.
-																								 choose_move(NewBoard, _, NextPlayer, NewCurrPlayer, _, DecDepth, NegScore),
-																								 Score is -NegScore.
+move(Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCurrPlayer, 0, 	Score, _, _)		:- !, boardStep(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, Score). % Board step inherently calls value.
+move(Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score, Alpha, Beta)	:- 	boardStep(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, _),
+																												DecDepth is Depth - 1, !,
+																												% Due to the nature of the value function, we can simply swap the players and negate its maximum score to get the minimum.
+																												% The same applies to the Alpha and Beta values (The minimizing player becomes the maximizing player).
+																												NegAlpha is -Beta,
+																												NegBeta is -Alpha,
+																												choose_move(NewBoard, _, NextPlayer, NewCurrPlayer, _, DecDepth, NegScore, NegAlpha, NegBeta),
+																												Score is -NegScore.
 						
 % Compares two game states (Part of MinMax algorithm)
 
