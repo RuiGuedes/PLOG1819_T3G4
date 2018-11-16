@@ -20,25 +20,13 @@ max(Max, CurrMax, [_|T]) :- max(Max, CurrMax, T).
 
 
 % Initial State of Board:
-initialBoard([ 	['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
+initialBoard([ 	['0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0'],
+				['0', '0', '0', '0', '0', '0', '0']
 			 ]).
 
 % Symbol converter
@@ -307,6 +295,7 @@ startGame(AIType1, AIType2) :- initialBoard(Board),
 gameStep(Board, CurrPlayer, NextPlayer) :- 	aiDepth(CurrPlayer, Depth), % If the CurrPlayer is an AI, this will succeed and return the depth depending on the AI type (Difficulty)
 											!,
 											choose_move(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score),
+											format('~p\n', [Score]),
 											nextGameStep(NewBoard, NextPlayer, NewCurrPlayer, Score), !.
 
 gameStep(Board, CurrPlayer, NextPlayer) :- 	displayGame(Board),	
@@ -340,12 +329,10 @@ boardStep(Board, NewBoard, player(CurrPlayerID, CurrPiece, CurrCaptureNo, CurrSe
 % +NewCurrPlayer:	Internal Representation of the Player going to play the next turn. 
 % +NewNextPlayer:	Internal Representation of the opponent of the Player playing the next turn.
 % +Score:			Score of the game state (Used to evaluate AI movements and end states) Range:[-100, 100].
-nextGameStep(NewBoard, NewCurrPlayer, NewNextPlayer, 100) 	:- 	winGame(NewBoard, NewNextPlayer, NewCurrPlayer). 	% The player who played the previous turn won the game (NewNextPlayer).
-nextGameStep(NewBoard, NewCurrPlayer, NewNextPlayer, _) 	:- 	fullBoard(NewBoard), drawGame(NewBoard, NewNextPlayer, NewCurrPlayer).
-nextGameStep(NewBoard, NewCurrPlayer, NewNextPlayer, _) 	:- 	gameStep(NewBoard, NewCurrPlayer, NewNextPlayer).																
+nextGameStep(NewBoard, NewCurrPlayer, NewNextPlayer, 100) 	:- 	!, winGame(NewBoard, NewNextPlayer, NewCurrPlayer). 	% The player who played the previous turn won the game (NewNextPlayer).
+nextGameStep(NewBoard, NewCurrPlayer, NewNextPlayer, _) 	:- 	fullBoard(NewBoard), !, drawGame(NewBoard, NewNextPlayer, NewCurrPlayer).
+nextGameStep(NewBoard, NewCurrPlayer, NewNextPlayer, _) 	:- 	!, gameStep(NewBoard, NewCurrPlayer, NewNextPlayer).
 
-
-% TODO - Final Versions of the end game.
 
 % Ends the game, displaying the final state of the board and final stats of the players
 
@@ -353,7 +340,7 @@ nextGameStep(NewBoard, NewCurrPlayer, NewNextPlayer, _) 	:- 	gameStep(NewBoard, 
 % +WinningPlayer:	Internal Representation of the Player who won the game.
 % +LosingPlayer:	Internal Representation of the Player who lost the game.
 winGame(Board, player(_, Num, _, _), _LosingPlayer):- 	displayGame(Board),
-														format('-> Victory: Player ~p won the game!~n~n', Num).
+														format('-> Victory: Player ~p won the game!\n\n', Num).
 
 % Ends the game, displaying the final state of the board and final stats of the players
 
@@ -361,7 +348,7 @@ winGame(Board, player(_, Num, _, _), _LosingPlayer):- 	displayGame(Board),
 % +WinningPlayer:	Internal Representation of the Player who won the game.
 % +LosingPlayer:	Internal Representation of the Player who lost the game.
 drawGame(Board, _WinningPlayer, _LosingPlayer):- 	displayGame(Board),
-													write('-> Draw: The board has been filled with neither players winning!~n~n').														
+													write('-> Draw: The board has been filled with neither players winning!\n\n').														
 				
 				
 				
@@ -558,7 +545,7 @@ valid_moves(Board, MoveList, LineSize, ColSize, ColNum) :- 	DecColNum is ColNum 
 % -BestScore:		Score of the best resulting state - Range:[-100, 100].
 
 % Initialize with accumulators (Necessary to detect Alpha-Beta Cuts).
-minimax(Board, BestBoard, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore, Alpha, Beta) :- minimax(Board, BestBoard, _, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, _, Depth, BestScore, -100, Alpha, Beta).
+minimax(Board, BestBoard, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore, Alpha, Beta) :- minimax(Board, BestBoard, _, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, _, Depth, BestScore, -101, Alpha, Beta).
 
 minimax(_	 , BestBoard, BestBoard, []		 , _		 , _		 , BestCurrPlayer, BestCurrPlayer, _	, BestScore, BestScore, _	 , _).
 minimax(Board, BestBoard, AccBoard,  [M | MS], CurrPlayer, NextPlayer, BestCurrPlayer, AccCurrPlayer,  Depth, BestScore, AccScore,  Alpha, Beta) :- 
@@ -573,7 +560,7 @@ minimax(Board, BestBoard, AccBoard,  [M | MS], CurrPlayer, NextPlayer, BestCurrP
 
 pruning(_, MaxBoard, MaxBoard, _, _, _, MaxCurrPlayer, MaxCurrPlayer, _, MaxScore, MaxScore, Alpha, Beta) :- Alpha >= Beta, !. % No need to keep processing the tree, we can stop here.
 																						
-pruning(Board, BestBoard, MaxBoard, MS, CurrPlayer, NextPlayer, BestCurrPlayer, MaxCurrPlayer, Depth, BestScore, MaxScore, Alpha, Beta) :-			
+pruning(Board, BestBoard, MaxBoard, MS, CurrPlayer, NextPlayer, BestCurrPlayer, MaxCurrPlayer, Depth, BestScore, MaxScore, Alpha, Beta) :- !,			
 			minimax(Board, BestBoard, MaxBoard, MS, CurrPlayer, NextPlayer, BestCurrPlayer, MaxCurrPlayer, Depth, BestScore, MaxScore, Alpha, Beta).																						
 
 % Analyses a move.
@@ -623,6 +610,6 @@ compare_moves(_, _, _, NewBoard2, NewCurrPlayer2, NewScore2, NewBoard2, NewCurrP
 % +NextCaptureNo:	Number of captures by the current player's opponent.
 % +NextSequenceNo:	Number of pieces in a row the current player's opponent has.
 % -Score:			Score attributed to the game state in the interval [-100, 100], where a maximal score represents a better state for the current player.
+value(_, _, NextCaptureNo, NextSequenceNo, -100) 							:-	(NextCaptureNo >= 10 ; NextSequenceNo >= 5). % Must come first, otherwise AI may think it won when progressing through the tree when it lost before.
 value(CurrCaptureNo, CurrSequenceNo, _, _, 100)								:-	(CurrCaptureNo >= 10 ; CurrSequenceNo >= 5).
-value(_, _, NextCaptureNo, NextSequenceNo, -100) 							:-	(NextCaptureNo >= 10 ; NextSequenceNo >= 5).
 value(CurrCaptureNo, CurrSequenceNo, NextCaptureNo, NextSequenceNo, Score) 	:-	Score = CurrCaptureNo - NextCaptureNo + CurrSequenceNo - NextSequenceNo .
