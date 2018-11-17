@@ -445,7 +445,7 @@ validateUserInput(Board, Line, Column):-	getPiece(Line, Column, Board, '0').
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Game State Transitions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Game Initial State:					startGame/0, startGame/1, startGame/2
-% Game State Handling and Transition:	gameStep/3, nextGameStep/4
+% Game State Handling and Transition:	gameStep/3,  game_over/4
 % Board State Handling and Transition: 	move/7
 % Game End States:						winGame/3, drawGame/3
 
@@ -471,14 +471,14 @@ gameStep(Board, CurrPlayer, NextPlayer) :- 	aiDepth(CurrPlayer, Depth), % If the
 											displayPlayerCaptInfo(CurrPlayer, NextPlayer),
 											displayPlayerTurn(CurrPlayer),
 											choose_move(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score),
-											nextGameStep(NewBoard, NextPlayer, NewCurrPlayer, Score), !.
+											game_over(NewBoard, NextPlayer, NewCurrPlayer, Score), !.
 
 gameStep(Board, CurrPlayer, NextPlayer) :- 	displayGame(Board),	
 											displayPlayerCaptInfo(CurrPlayer, NextPlayer),
 											!,
 											handleInput(Board, CurrPlayer, Line, Column), !,
 											move(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, Score),	!,
-											nextGameStep(NewBoard, NextPlayer, NewCurrPlayer, Score), !.
+											game_over(NewBoard, NextPlayer, NewCurrPlayer, Score), !.
 
 
 % Handles the transition between two board states. 
@@ -505,9 +505,9 @@ move(Board, NewBoard, player(CurrPlayerID, CurrPiece, CurrCaptureNo, CurrSequenc
 % +NewCurrPlayer:	Internal Representation of the Player going to play the next turn. 
 % +NewNextPlayer:	Internal Representation of the opponent of the Player playing the next turn.
 % +Score:			Score of the game state (Used to evaluate AI movements and end states) Range:[-100, 100].
-nextGameStep(NewBoard, NewCurrPlayer, NewNextPlayer, 100) 	:- 	!, winGame(NewBoard, NewNextPlayer, NewCurrPlayer). 	% The player who played the previous turn won the game (NewNextPlayer).
-nextGameStep(NewBoard, NewCurrPlayer, NewNextPlayer, _) 	:- 	fullBoard(NewBoard), !, drawGame(NewBoard, NewNextPlayer, NewCurrPlayer).
-nextGameStep(NewBoard, NewCurrPlayer, NewNextPlayer, _) 	:- 	!, gameStep(NewBoard, NewCurrPlayer, NewNextPlayer).
+game_over(NewBoard, NewCurrPlayer, NewNextPlayer, 100) 	:- 	!, winGame(NewBoard, NewNextPlayer, NewCurrPlayer). 	% The player who played the previous turn won the game (NewNextPlayer).
+game_over(NewBoard, NewCurrPlayer, NewNextPlayer, _) 	:- 	fullBoard(NewBoard), !, drawGame(NewBoard, NewNextPlayer, NewCurrPlayer).
+game_over(NewBoard, NewCurrPlayer, NewNextPlayer, _) 	:- 	!, gameStep(NewBoard, NewCurrPlayer, NewNextPlayer).
 
 
 % Ends the game, displaying the final state of the board and final stats of the players
