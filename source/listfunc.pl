@@ -259,11 +259,11 @@ displayMainMenu(5, BoardSize):- 	displayGameTitle,
 									format('#                                                                            #~n', []),
 									format('##############################################################################~n', []),
 									format('#                                                                            #~n', []),
-									format('#                             1) 5x5    (4 captures  | 3 pieces in a row)    #~n', []),
+									format('#               1) 5x5    (4 captures  | 3 pieces in a row)                  #~n', []),
 									format('#                                                                            #~n', []),
-									format('#                             2) 7x7    (7 captures  | 4 pieces in a row)    #~n', []),
+									format('#               2) 7x7    (7 captures  | 4 pieces in a row)                  #~n', []),
 									format('#                                                                            #~n', []),
-									format('#                             3) 13x13  (10 captures | 5 pieces in a row)    #~n', []),
+									format('#               3) 13x13  (10 captures | 5 pieces in a row)                  #~n', []),
 									format('#                                                                            #~n', []),
 									format('##############################################################################~n~n', []),
 									handleMenuInput(3, BoardSize).										
@@ -446,7 +446,7 @@ validateUserInput(Board, Line, Column):-	getPiece(Line, Column, Board, '0').
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Game Initial State:					startGame/0, startGame/1, startGame/2
 % Game State Handling and Transition:	gameStep/3, nextGameStep/4
-% Board State Handling and Transition: 	boardStep/7
+% Board State Handling and Transition: 	move/7
 % Game End States:						winGame/3, drawGame/3
 
 % Initializes the game in its initial state (Empty Board)
@@ -477,7 +477,7 @@ gameStep(Board, CurrPlayer, NextPlayer) :- 	displayGame(Board),
 											displayPlayerCaptInfo(CurrPlayer, NextPlayer),
 											!,
 											handleInput(Board, CurrPlayer, Line, Column), !,
-											boardStep(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, Score),	!,
+											move(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, Score),	!,
 											nextGameStep(NewBoard, NextPlayer, NewCurrPlayer, Score), !.
 
 
@@ -492,7 +492,7 @@ gameStep(Board, CurrPlayer, NextPlayer) :- 	displayGame(Board),
 % +SetLine:		 	Line of the cell where the player is playing his piece.
 % +SetColumn:	 	Column of the cell where the player is playing his piece.
 % -Score:		 	Score of the resulting state (Used to evaluate AI movements and end states) Range:[-100, 100].
-boardStep(Board, NewBoard, player(CurrPlayerID, CurrPiece, CurrCaptureNo, CurrSequenceNo), player(_, NextPiece, NextCaptureNo, NextSequenceNo), player(CurrPlayerID, CurrPiece, NewCaptureNo, NewSequenceNo), SetLine, SetColumn, Score) :- 	
+move(Board, NewBoard, player(CurrPlayerID, CurrPiece, CurrCaptureNo, CurrSequenceNo), player(_, NextPiece, NextCaptureNo, NextSequenceNo), player(CurrPlayerID, CurrPiece, NewCaptureNo, NewSequenceNo), SetLine, SetColumn, Score) :- 	
 		setPiece(SetLine, SetColumn, Board, SetBoard, CurrPiece),
 		updateSequence(CurrPiece, SetBoard, SetLine, SetColumn, CurrSequenceNo, NewSequenceNo),
 		updateCaptures(CurrPiece, NextPiece, SetBoard, NewBoard, SetLine, SetColumn, CurrCaptureNo, NewCaptureNo),
@@ -687,7 +687,7 @@ choose_move(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, _, Score) 
 																					boardSize(Board, LineSize, ColSize),
 																					Line is (LineSize + 1) / 2,
 																					Column is (ColSize + 1) / 2, !,
-																					boardStep(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, integer(Line), integer(Column), Score).																						
+																					move(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, integer(Line), integer(Column), Score).																						
 choose_move(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, Score) :- 	choose_move(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, _, -100, 100), % Initial values of Alpha and Beta
 																						length(Board, Size),
 																						value(Size, BestCurrPlayer, NextPlayer, Score).
@@ -732,7 +732,7 @@ minimax(Board, BestBoard, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, Dept
 
 minimax(_	 , BestBoard, BestBoard, []		 , _		 , _		 , BestCurrPlayer, BestCurrPlayer, _	, BestScore, BestScore, _	 , _).
 minimax(Board, BestBoard, AccBoard,  [M | MS], CurrPlayer, NextPlayer, BestCurrPlayer, AccCurrPlayer,  Depth, BestScore, AccScore,  Alpha, Beta) :- 
-																												move(Board, NewBoard1, M, CurrPlayer, NextPlayer, NewCurrPlayer1, Depth, NewScore1, Alpha, Beta),
+																												analyse_move(Board, NewBoard1, M, CurrPlayer, NextPlayer, NewCurrPlayer1, Depth, NewScore1, Alpha, Beta),
 																												compare_moves(	NewBoard1, NewCurrPlayer1, NewScore1, 
 																																AccBoard,  AccCurrPlayer,  AccScore,
 																																MaxBoard,  MaxCurrPlayer,  MaxScore),
@@ -758,15 +758,15 @@ pruning(Board, BestBoard, MaxBoard, MS, CurrPlayer, NextPlayer, BestCurrPlayer, 
 % -NewCurrPlayer:	Internal Representation of the Player going to play in this game state after playing.
 % +Depth:			Depth of game states to analyze.
 % -Score:			Score of the resulting state - Range:[-100, 100].
-move(Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCurrPlayer, 0, 	Score, _, _)		:- !, boardStep(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, Score). % Board step inherently calls value.
-move(Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score, Alpha, Beta)	:- 	boardStep(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, _),
-																												DecDepth is Depth - 1, !,
-																												% Due to the nature of the value function, we can simply swap the players and negate its maximum score to get the minimum.
-																												% The same applies to the Alpha and Beta values (The minimizing player becomes the maximizing player).
-																												NegAlpha is -Beta,
-																												NegBeta is -Alpha,
-																												choose_move(NewBoard, _, NextPlayer, NewCurrPlayer, _, DecDepth, NegScore, NegAlpha, NegBeta),
-																												Score is -NegScore.
+analyse_move(Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCurrPlayer, 0, 	Score, _, _)		:- !, move(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, Score). % Board step inherently calls value.
+analyse_move(Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score, Alpha, Beta)	:- 	move(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, _),
+																														DecDepth is Depth - 1, !,
+																														% Due to the nature of the value function, we can simply swap the players and negate its maximum score to get the minimum.
+																														% The same applies to the Alpha and Beta values (The minimizing player becomes the maximizing player).
+																														NegAlpha is -Beta,
+																														NegBeta is -Alpha,
+																														choose_move(NewBoard, _, NextPlayer, NewCurrPlayer, _, DecDepth, NegScore, NegAlpha, NegBeta),
+																														Score is -NegScore.
 						
 % Compares two game states (Part of MinMax algorithm)
 
@@ -797,8 +797,7 @@ compare_moves(_, _, _, NewBoard2, NewCurrPlayer2, NewScore2, NewBoard2, NewCurrP
 winning_conditions(5 , 4 , 3).
 winning_conditions(7 , 7 , 4).
 winning_conditions(13, 10, 5).
-
-
+	
 value(Size, _, _, NextCaptureNo, NextSequenceNo, -100) :-	winning_conditions(Size, WinCaptureNo, WinSequenceNo),
 														(NextCaptureNo >= WinCaptureNo ; NextSequenceNo >= WinSequenceNo). % Must come first, otherwise AI may think it won when progressing through the tree when it lost before.
 value(Size, CurrCaptureNo, CurrSequenceNo, _, _, 100)	 :-	winning_conditions(Size, WinCaptureNo, WinSequenceNo),
