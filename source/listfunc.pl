@@ -178,7 +178,7 @@ setLine(LinNo, MaxLines, NewLine, [H|Told], [H|Tnew]) :-	LinNo < MaxLines,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Initializes the game by displaying the main menu
-init:- displayMainMenu.
+play:- displayMainMenu.
 
 % Displays game title 
 displayGameTitle:- 	nl,
