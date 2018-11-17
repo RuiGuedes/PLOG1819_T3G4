@@ -259,11 +259,11 @@ displayMainMenu(5, BoardSize):- 	displayGameTitle,
 									format('#                                                                            #~n', []),
 									format('##############################################################################~n', []),
 									format('#                                                                            #~n', []),
-									format('#                             1) 5x5                                         #~n', []),
+									format('#                             1) 5x5    (4 captures  | 3 pieces in a row)    #~n', []),
 									format('#                                                                            #~n', []),
-									format('#                             2) 7x7                                         #~n', []),
+									format('#                             2) 7x7    (7 captures  | 4 pieces in a row)    #~n', []),
 									format('#                                                                            #~n', []),
-									format('#                             3) 13x13                                       #~n', []),
+									format('#                             3) 13x13  (10 captures | 5 pieces in a row)    #~n', []),
 									format('#                                                                            #~n', []),
 									format('##############################################################################~n~n', []),
 									handleMenuInput(3, BoardSize).										
@@ -793,14 +793,16 @@ compare_moves(_, _, _, NewBoard2, NewCurrPlayer2, NewScore2, NewBoard2, NewCurrP
 % +NextCaptureNo:	Number of captures by the current player's opponent.
 % +NextSequenceNo:	Number of pieces in a row the current player's opponent has.
 % -Score:			Score attributed to the game state in the interval [-100, 100], where a maximal score represents a better state for the current player.
-value(5, _, _, NextCaptureNo, NextSequenceNo, -100) 							:-	(NextCaptureNo >= 4 ; NextSequenceNo >= 3). % Must come first, otherwise AI may think it won when progressing through the tree when it lost before.
-value(5, CurrCaptureNo, CurrSequenceNo, _, _, 100)								:-	(CurrCaptureNo >= 4 ; CurrSequenceNo >= 3).
 
-value(7, _, _, NextCaptureNo, NextSequenceNo, -100) 							:-	(NextCaptureNo >= 7 ; NextSequenceNo >= 4). % Must come first, otherwise AI may think it won when progressing through the tree when it lost before.
-value(7, CurrCaptureNo, CurrSequenceNo, _, _, 100)								:-	(CurrCaptureNo >= 7 ; CurrSequenceNo >= 4).
+winning_conditions(5 , 4 , 3).
+winning_conditions(7 , 7 , 4).
+winning_conditions(13, 10, 5).
 
-value(13, _, _, NextCaptureNo, NextSequenceNo, -100) 							:-	(NextCaptureNo >= 10 ; NextSequenceNo >= 5). % Must come first, otherwise AI may think it won when progressing through the tree when it lost before.
-value(13, CurrCaptureNo, CurrSequenceNo, _, _, 100)								:-	(CurrCaptureNo >= 10 ; CurrSequenceNo >= 5).
 
+value(Size, _, _, NextCaptureNo, NextSequenceNo, -100) :-	winning_conditions(Size, WinCaptureNo, WinSequenceNo),
+														(NextCaptureNo >= WinCaptureNo ; NextSequenceNo >= WinSequenceNo). % Must come first, otherwise AI may think it won when progressing through the tree when it lost before.
+value(Size, CurrCaptureNo, CurrSequenceNo, _, _, 100)	 :-	winning_conditions(Size, WinCaptureNo, WinSequenceNo),
+														(CurrCaptureNo >= WinCaptureNo ; CurrSequenceNo >= WinSequenceNo).
 value(_, CurrCaptureNo, CurrSequenceNo, NextCaptureNo, NextSequenceNo, Score) 	:-	Score = CurrCaptureNo - NextCaptureNo + CurrSequenceNo - NextSequenceNo .
-value(_, player(_, _, CurrCaptureNo, CurrSequenceNo), player(_, _, NextCaptureNo, NextSequenceNo), Score):- Score = CurrCaptureNo - NextCaptureNo + CurrSequenceNo - NextSequenceNo .
+
+value(Size, player(_, _, CurrCaptureNo, CurrSequenceNo), player(_, _, NextCaptureNo, NextSequenceNo), Score) :- value(Size, CurrCaptureNo, CurrSequenceNo, NextCaptureNo, NextSequenceNo, Score).
