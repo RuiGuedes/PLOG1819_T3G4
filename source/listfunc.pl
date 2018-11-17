@@ -20,20 +20,55 @@ max(Max, CurrMax, [_|T]) :- max(Max, CurrMax, T).
 
 
 % Initial State of Board:
-initialBoard([ 	['0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0'],
-				['0', '0', '0', '0', '0', '0', '0']
-			 ]).
+initialBoard('5x5', [ 	['0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0']
+					]).
+			 
+initialBoard('7x7', [	['0', '0', '0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0', '0', '0']
+					 ]).
+				 
+initialBoard('13x13', [ 	['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+							['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+							['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+							['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+							['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+							['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+							['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+							['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+							['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+							['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+							['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+							['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
+							['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
+						 ]).				 
 
 % Symbol converter
 modelToView('0','+').
 modelToView('1','O').
 modelToView('2','X').
 modelToView('3','#').
+
+% Option converter
+optionConverter(1,'easyAI').
+optionConverter(2,'mediumAI').
+optionConverter(3,'hardAI').
+
+% Board size converter
+boardSizeConverter(1,'5x5').
+boardSizeConverter(2,'7x7').
+boardSizeConverter(3,'13x13').
+boardSizeConverter(5,'5x5').
+boardSizeConverter(7,'7x7').
+boardSizeConverter(13,'13x13').
 
 
 % Retrieves the dimensions of a rectangular board.
@@ -49,7 +84,9 @@ boardSize(Board, LineSize, ColSize):-	Board = [FirstLine | _],
 % Succeeds if the board is empty (is in its initial state)
 
 % +Board: Internal Representation of the board to be checked.
-emptyBoard(Board):- initialBoard(Board).
+emptyBoard(Board):- length(Board, Size),
+					boardSizeConverter(Size, BoardSize), !,
+					initialBoard(BoardSize, Board).
 
 % Succeeds if the board is full (resulting in a draw)
 
@@ -135,6 +172,139 @@ setLine(LinNo, MaxLines, NewLine, [H|Told], [H|Tnew]) :-	LinNo < MaxLines,
 															PrevLinNo is LinNo + 1,
 															setLine(PrevLinNo, MaxLines, NewLine, Told, Tnew).										
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Game Initializer %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Initializes the game by displaying the main menu
+init:- displayMainMenu.
+
+% Displays game title 
+displayGameTitle:- 	nl,
+					format('##############################################################################~n', []),
+					format('#                                                                            #~n', []),
+					format('#    ############ ############  ######       ### ############ ############   #~n', []),
+					format('#    ############ ############  ### ###      ### ############ ############   #~n', []),
+					format('#    ###      ### ###           ###  ###     ###     ###      ###            #~n', []),
+					format('#    ############ #########     ###   ###    ###     ###      #########      #~n', []),
+					format('#    ############ #########     ###    ###   ###     ###      #########      #~n', []),
+					format('#    ###          ###           ###     ###  ###     ###      ###            #~n', []),
+					format('#    ###          ############  ###      ### ###     ###      ############   #~n', []),
+					format('#    ###          ############  ###       ######     ###      ############   #~n', []),
+					format('#                                                                            #~n', []),
+					format('##############################################################################~n', []),
+					format('#                                                                            #~n', []).
+
+% Displays the different type of menus
+
+% +Option:  	Determines which menu should be shown
+% +Difficulty: 	Difficulty selected by the user				
+displayMainMenu:- 	displayGameTitle,
+					format('#                             1) Play Game                                   #~n', []),
+					format('#                                                                            #~n', []),
+					format('#                             2) Rules                                       #~n', []),
+					format('#                                                                            #~n', []),
+					format('#                             3) Exit                                        #~n', []),
+					format('#                                                                            #~n', []),
+					format('##############################################################################~n~n', []),
+					handleMenuInput(0,_).
+					
+displayMainMenu(1):-	displayGameTitle,
+						format('#                             1) Player vs Player                            #~n', []),
+						format('#                                                                            #~n', []),
+						format('#                             2) Player vs AI                                #~n', []),
+						format('#                                                                            #~n', []),
+						format('#                             3) AI vs AI                                    #~n', []),
+						format('#                                                                            #~n', []),
+						format('#                             4) Back                                        #~n', []),
+						format('#                                                                            #~n', []),
+						format('##############################################################################~n~n', []),
+						handleMenuInput(1,_).
+
+displayMainMenu(2):- 	displayGameTitle,
+						format('# 1) First move must be made in the center of the board.                     #~n', []),
+						format('#                                                                            #~n', []),
+						format('# 2) Captures occur when, along any direction, two contiguous stones of a    #~n', []),
+						format('#    symbol are surrounded by two stones of another symbol.                  #~n', []),
+						format('#                                                                            #~n', []),
+						format('# 3) Winning conditions: X pieces in sequence or making Y captures.          #~n', []),
+						format('#    Both X and Y depend on the board size                                   #~n', []),
+						format('#                                                                            #~n', []),
+						format('# 4) If all the board cells are occupied without any of the winning          #~n', []),
+						format('#    conditions applying to a player, the game is considered a draw.         #~n', []),
+						format('#                                                                            #~n', []),
+						format('##############################################################################~n~n', []),
+						format('Press any key to continue', []), read(_),
+						displayMainMenu.
+						
+displayMainMenu(3).						
+						
+displayMainMenu(4, Difficulty):- 	displayGameTitle,
+									format('#                             DIFFICULTY                                     #~n', []),
+									format('#                                                                            #~n', []),
+									format('##############################################################################~n', []),
+									format('#                                                                            #~n', []),
+									format('#                             1) Easy                                        #~n', []),
+									format('#                                                                            #~n', []),
+									format('#                             2) Medium                                      #~n', []),
+									format('#                                                                            #~n', []),
+									format('#                             3) Hard                                        #~n', []),
+									format('#                                                                            #~n', []),
+									format('##############################################################################~n~n', []),
+									handleMenuInput(2, Difficulty).	
+
+displayMainMenu(5, BoardSize):- 	displayGameTitle,
+									format('#                             BOARD SIZE                                     #~n', []),
+									format('#                                                                            #~n', []),
+									format('##############################################################################~n', []),
+									format('#                                                                            #~n', []),
+									format('#                             1) 5x5                                         #~n', []),
+									format('#                                                                            #~n', []),
+									format('#                             2) 7x7                                         #~n', []),
+									format('#                                                                            #~n', []),
+									format('#                             3) 13x13                                       #~n', []),
+									format('#                                                                            #~n', []),
+									format('##############################################################################~n~n', []),
+									handleMenuInput(3, BoardSize).										
+										
+% Initialiazes the game considering user options
+
+% +Option: 	Selected option										
+initGame(1):- 	displayMainMenu(5, BoardSize),
+				startGame(BoardSize), !.
+initGame(2):-	displayMainMenu(4, AIType),
+				displayMainMenu(5, BoardSize),
+				startGame(BoardSize, AIType), !.
+initGame(3):- 	displayMainMenu(4, AIType),
+				displayMainMenu(5, BoardSize),
+				startGame(BoardSize, AIType, AIType), !.
+initGame(4):- displayMainMenu.
+					
+
+% Handles main menu input
+
+% +Option:  Option selected by the user
+% -Difficulty: Difficulty choosen by the user					
+handleMenuInput(0, _):- 	menuInput(Option),
+							displayMainMenu(Option).
+					
+handleMenuInput(1, _):- 	menuInput(Option),
+							initGame(Option).	
+
+handleMenuInput(2, Difficulty):-	menuInput(Option),
+									optionConverter(Option, Difficulty).
+									
+handleMenuInput(3, BoardSize):-		menuInput(Option),
+									boardSizeConverter(Option, BoardSize).									
+					
+handleMenuInput(Option, Var):-		format('Invalid option. Try again ! ~n~n',[]),
+									handleMenuInput(Option, Var).
+															
+% Retrieves the player input															
+menuInput(Option):- format('Select option: ', []),
+					read(Option).
+
 															
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Game Display %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -219,7 +389,10 @@ displayPlayerCaptInfo(player(_, '1', P1Captures, _), player(_, '2', P2Captures, 
 																						format('   Player Two -> [~p] Captures~n~n', P2Captures).
 displayPlayerCaptInfo(PlayerTwo, PlayerOne):- displayPlayerCaptInfo(PlayerOne, PlayerTwo).																								
 						
-						
+
+% Displays AI, id turn						
+displayPlayerTurn(player(_, PieceID, _, _)):- 	modelToView(PieceID, PieceSymb),
+												format('-> Player ~p [~p] turn.~n~n', [PieceID, PieceSymb]).
 						
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Input Handling %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -277,14 +450,14 @@ validateUserInput(Board, Line, Column):-	getPiece(Line, Column, Board, '0').
 % Game End States:						winGame/3, drawGame/3
 
 % Initializes the game in its initial state (Empty Board)
-startGame :- initialBoard(Board),
-			 gameStep(Board, player(playerOne, '1', 0, 0), player(playerTwo, '2', 0, 0)).
+startGame(BoardSize) :- initialBoard(BoardSize, Board),
+						gameStep(Board, player(playerOne, '1', 0, 0), player(playerTwo, '2', 0, 0)).
 			 
-startGame(AIType) :- initialBoard(Board),
-					 gameStep(Board, player(playerOne, '1', 0, 0), player(AIType, '2', 0, 0)).
+startGame(BoardSize, AIType) :- initialBoard(BoardSize, Board),
+								gameStep(Board, player(playerOne, '1', 0, 0), player(AIType, '2', 0, 0)).
 
-startGame(AIType1, AIType2) :- initialBoard(Board),
-							   gameStep(Board, player(AIType1, '1', 0, 0), player(AIType2, '2', 0, 0)).
+startGame(BoardSize, AIType1, AIType2) :- 	initialBoard(BoardSize, Board),
+											gameStep(Board, player(AIType1, '1', 0, 0), player(AIType2, '2', 0, 0)).
 
 % Computes a single game state.
 
@@ -294,8 +467,10 @@ startGame(AIType1, AIType2) :- initialBoard(Board),
 % +Limit:		Limits the board to optimize the AI (to avoid processing unnecessary cells)
 gameStep(Board, CurrPlayer, NextPlayer) :- 	aiDepth(CurrPlayer, Depth), % If the CurrPlayer is an AI, this will succeed and return the depth depending on the AI type (Difficulty)
 											!,
+											displayGame(Board),
+											displayPlayerCaptInfo(CurrPlayer, NextPlayer),
+											displayPlayerTurn(CurrPlayer),
 											choose_move(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score),
-											format('~p\n', [Score]),
 											nextGameStep(NewBoard, NextPlayer, NewCurrPlayer, Score), !.
 
 gameStep(Board, CurrPlayer, NextPlayer) :- 	displayGame(Board),	
@@ -321,7 +496,8 @@ boardStep(Board, NewBoard, player(CurrPlayerID, CurrPiece, CurrCaptureNo, CurrSe
 		setPiece(SetLine, SetColumn, Board, SetBoard, CurrPiece),
 		updateSequence(CurrPiece, SetBoard, SetLine, SetColumn, CurrSequenceNo, NewSequenceNo),
 		updateCaptures(CurrPiece, NextPiece, SetBoard, NewBoard, SetLine, SetColumn, CurrCaptureNo, NewCaptureNo),
-		value(NewCaptureNo, NewSequenceNo, NextCaptureNo, NextSequenceNo, Score). 
+		length(Board, Size),
+		value(Size, NewCaptureNo, NewSequenceNo, NextCaptureNo, NextSequenceNo, Score). 
 
 % Handles the transition between two game states		
 
@@ -507,7 +683,14 @@ aiDepth(player(hardAI, _, _, _),   3).
 % -BestCurrPlayer:	Internal Representation of the Player going to play in this game state after doing the best play.
 % +Depth:			Depth of game states to analyze.
 % -Score:			Score of the resulting state - Range:[-100, 100].
-choose_move(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, Score) :- choose_move(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, Score, -100, 100). % Initial values of Alpha and Beta
+choose_move(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, _, Score) :- 	emptyBoard(Board), !,
+																					boardSize(Board, LineSize, ColSize),
+																					Line is (LineSize + 1) / 2,
+																					Column is (ColSize + 1) / 2, !,
+																					boardStep(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, integer(Line), integer(Column), Score).																						
+choose_move(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, Score) :- 	choose_move(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, _, -100, 100), % Initial values of Alpha and Beta
+																						length(Board, Size),
+																						value(Size, BestCurrPlayer, NextPlayer, Score).
 choose_move(Board, BestBoard, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, Score, Alpha, Beta) :-	valid_moves(Board, MoveList),
 																									minimax(Board, BestBoard, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, Score, Alpha, Beta).
 
@@ -545,17 +728,17 @@ valid_moves(Board, MoveList, LineSize, ColSize, ColNum) :- 	DecColNum is ColNum 
 % -BestScore:		Score of the best resulting state - Range:[-100, 100].
 
 % Initialize with accumulators (Necessary to detect Alpha-Beta Cuts).
-minimax(Board, BestBoard, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore, Alpha, Beta) :- minimax(Board, BestBoard, _, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, _, Depth, BestScore, -101, Alpha, Beta).
+minimax(Board, BestBoard, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, Depth, BestScore, Alpha, Beta) :- 	minimax(Board, BestBoard, _, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, _, Depth, BestScore, -101, Alpha, Beta).
 
 minimax(_	 , BestBoard, BestBoard, []		 , _		 , _		 , BestCurrPlayer, BestCurrPlayer, _	, BestScore, BestScore, _	 , _).
 minimax(Board, BestBoard, AccBoard,  [M | MS], CurrPlayer, NextPlayer, BestCurrPlayer, AccCurrPlayer,  Depth, BestScore, AccScore,  Alpha, Beta) :- 
-																						move(Board, NewBoard1, M, CurrPlayer, NextPlayer, NewCurrPlayer1, Depth, NewScore1, Alpha, Beta),
-																						compare_moves(	NewBoard1, NewCurrPlayer1, NewScore1, 
-																										AccBoard,  AccCurrPlayer,  AccScore,
-																										MaxBoard,  MaxCurrPlayer,  MaxScore),
-																						!,
-																						max(NewAlpha, [Alpha, MaxScore]),
-																						pruning(Board, BestBoard, MaxBoard, MS, CurrPlayer, NextPlayer, BestCurrPlayer, MaxCurrPlayer, Depth, BestScore, MaxScore, NewAlpha, Beta).
+																												move(Board, NewBoard1, M, CurrPlayer, NextPlayer, NewCurrPlayer1, Depth, NewScore1, Alpha, Beta),
+																												compare_moves(	NewBoard1, NewCurrPlayer1, NewScore1, 
+																																AccBoard,  AccCurrPlayer,  AccScore,
+																																MaxBoard,  MaxCurrPlayer,  MaxScore),
+																												!,
+																												max(NewAlpha, [Alpha, MaxScore]),
+																												pruning(Board, BestBoard, MaxBoard, MS, CurrPlayer, NextPlayer, BestCurrPlayer, MaxCurrPlayer, Depth, BestScore, MaxScore, NewAlpha, Beta).
 																						
 
 pruning(_, MaxBoard, MaxBoard, _, _, _, MaxCurrPlayer, MaxCurrPlayer, _, MaxScore, MaxScore, Alpha, Beta) :- Alpha >= Beta, !. % No need to keep processing the tree, we can stop here.
@@ -610,6 +793,14 @@ compare_moves(_, _, _, NewBoard2, NewCurrPlayer2, NewScore2, NewBoard2, NewCurrP
 % +NextCaptureNo:	Number of captures by the current player's opponent.
 % +NextSequenceNo:	Number of pieces in a row the current player's opponent has.
 % -Score:			Score attributed to the game state in the interval [-100, 100], where a maximal score represents a better state for the current player.
-value(_, _, NextCaptureNo, NextSequenceNo, -100) 							:-	(NextCaptureNo >= 10 ; NextSequenceNo >= 5). % Must come first, otherwise AI may think it won when progressing through the tree when it lost before.
-value(CurrCaptureNo, CurrSequenceNo, _, _, 100)								:-	(CurrCaptureNo >= 10 ; CurrSequenceNo >= 5).
-value(CurrCaptureNo, CurrSequenceNo, NextCaptureNo, NextSequenceNo, Score) 	:-	Score = CurrCaptureNo - NextCaptureNo + CurrSequenceNo - NextSequenceNo .
+value(5, _, _, NextCaptureNo, NextSequenceNo, -100) 							:-	(NextCaptureNo >= 4 ; NextSequenceNo >= 3). % Must come first, otherwise AI may think it won when progressing through the tree when it lost before.
+value(5, CurrCaptureNo, CurrSequenceNo, _, _, 100)								:-	(CurrCaptureNo >= 4 ; CurrSequenceNo >= 3).
+
+value(7, _, _, NextCaptureNo, NextSequenceNo, -100) 							:-	(NextCaptureNo >= 7 ; NextSequenceNo >= 4). % Must come first, otherwise AI may think it won when progressing through the tree when it lost before.
+value(7, CurrCaptureNo, CurrSequenceNo, _, _, 100)								:-	(CurrCaptureNo >= 7 ; CurrSequenceNo >= 4).
+
+value(13, _, _, NextCaptureNo, NextSequenceNo, -100) 							:-	(NextCaptureNo >= 10 ; NextSequenceNo >= 5). % Must come first, otherwise AI may think it won when progressing through the tree when it lost before.
+value(13, CurrCaptureNo, CurrSequenceNo, _, _, 100)								:-	(CurrCaptureNo >= 10 ; CurrSequenceNo >= 5).
+
+value(_, CurrCaptureNo, CurrSequenceNo, NextCaptureNo, NextSequenceNo, Score) 	:-	Score = CurrCaptureNo - NextCaptureNo + CurrSequenceNo - NextSequenceNo .
+value(_, player(_, _, CurrCaptureNo, CurrSequenceNo), player(_, _, NextCaptureNo, NextSequenceNo), Score):- Score = CurrCaptureNo - NextCaptureNo + CurrSequenceNo - NextSequenceNo .
