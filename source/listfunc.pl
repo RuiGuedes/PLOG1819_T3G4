@@ -19,14 +19,7 @@ max(Max, CurrMax, [_|T]) :- max(Max, CurrMax, T).
 % Auxiliary Predicates: getLine/3, getColumn/3, setLine/4 and setColumn/4
 
 
-% Initial State of Board:
-initialBoard('5x5', [ 	['0', '0', '0', '0', '0'],
-						['0', '0', '0', '0', '0'],
-						['0', '0', '0', '0', '0'],
-						['0', '0', '0', '0', '0'],
-						['0', '0', '0', '0', '0']
-					]).
-			 
+% Initial State of Board:			 
 initialBoard('7x7', [	['0', '0', '0', '0', '0', '0', '0'],
 						['0', '0', '0', '0', '0', '0', '0'],
 						['0', '0', '0', '0', '0', '0', '0'],
@@ -35,6 +28,17 @@ initialBoard('7x7', [	['0', '0', '0', '0', '0', '0', '0'],
 						['0', '0', '0', '0', '0', '0', '0'],
 						['0', '0', '0', '0', '0', '0', '0']
 					 ]).
+					 
+initialBoard('9x9', [	['0', '0', '0', '0', '0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0', '0', '0', '0', '0'],
+						['0', '0', '0', '0', '0', '0', '0', '0', '0']
+					 ]).					 
 				 
 initialBoard('13x13', [ 	['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
 							['0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0'],
@@ -63,11 +67,11 @@ optionConverter(2,'mediumAI').
 optionConverter(3,'hardAI').
 
 % Board size converter
-boardSizeConverter(1,'5x5').
-boardSizeConverter(2,'7x7').
+boardSizeConverter(1,'7x7').
+boardSizeConverter(2,'9x9').
 boardSizeConverter(3,'13x13').
-boardSizeConverter(5,'5x5').
 boardSizeConverter(7,'7x7').
+boardSizeConverter(9,'9x9').
 boardSizeConverter(13,'13x13').
 
 
@@ -259,9 +263,9 @@ displayMainMenu(5, BoardSize):- 	displayGameTitle,
 									format('#                                                                            #~n', []),
 									format('##############################################################################~n', []),
 									format('#                                                                            #~n', []),
-									format('#               1) 5x5    (4 captures  | 3 pieces in a row)                  #~n', []),
+									format('#               1) 7x7    (5 captures  | 4 pieces in a row)                  #~n', []),
 									format('#                                                                            #~n', []),
-									format('#               2) 7x7    (7 captures  | 4 pieces in a row)                  #~n', []),
+									format('#               2) 9x9    (7 captures  | 6 pieces in a row)                  #~n', []),
 									format('#                                                                            #~n', []),
 									format('#               3) 13x13  (10 captures | 5 pieces in a row)                  #~n', []),
 									format('#                                                                            #~n', []),
@@ -794,8 +798,8 @@ compare_moves(_, _, _, NewBoard2, NewCurrPlayer2, NewScore2, NewBoard2, NewCurrP
 % +NextSequenceNo:	Number of pieces in a row the current player's opponent has.
 % -Score:			Score attributed to the game state in the interval [-100, 100], where a maximal score represents a better state for the current player.
 
-winning_conditions(5 , 4 , 3).
-winning_conditions(7 , 7 , 4).
+winning_conditions(7 , 5 , 4).
+winning_conditions(9 , 7 , 6).
 winning_conditions(13, 10, 5).
 	
 value(Size, _, _, NextCaptureNo, NextSequenceNo, -100) :-	winning_conditions(Size, WinCaptureNo, WinSequenceNo),
