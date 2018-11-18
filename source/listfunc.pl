@@ -180,9 +180,10 @@ setLine(LinNo, MaxLines, NewLine, [H|Told], [H|Tnew]) :-	LinNo < MaxLines,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Game Initializer %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% API: play/0, displayMainMenu/2, displayGameTitle/0, initGame/1, handleMenuInput/2, menuInput/1
 
 % Initializes the game by displaying the main menu
-play:- displayMainMenu.
+play:- displayMainMenu(0, _).
 
 % Displays game title 
 displayGameTitle:- 	nl,
@@ -204,17 +205,17 @@ displayGameTitle:- 	nl,
 
 % +Option:  	Determines which menu should be shown
 % +Difficulty: 	Difficulty selected by the user				
-displayMainMenu:- 	displayGameTitle,
-					format('#                             1) Play Game                                   #~n', []),
-					format('#                                                                            #~n', []),
-					format('#                             2) Rules                                       #~n', []),
-					format('#                                                                            #~n', []),
-					format('#                             3) Exit                                        #~n', []),
-					format('#                                                                            #~n', []),
-					format('##############################################################################~n~n', []),
-					handleMenuInput(0,_).
+displayMainMenu(0, _):- 	displayGameTitle,
+							format('#                             1) Play Game                                   #~n', []),
+							format('#                                                                            #~n', []),
+							format('#                             2) Rules                                       #~n', []),
+							format('#                                                                            #~n', []),
+							format('#                             3) Exit                                        #~n', []),
+							format('#                                                                            #~n', []),
+							format('##############################################################################~n~n', []),
+							handleMenuInput(0,_).
 					
-displayMainMenu(1):-	displayGameTitle,
+displayMainMenu(1, _):-	displayGameTitle,
 						format('#                             1) Player vs Player                            #~n', []),
 						format('#                                                                            #~n', []),
 						format('#                             2) Player vs AI                                #~n', []),
@@ -226,7 +227,7 @@ displayMainMenu(1):-	displayGameTitle,
 						format('##############################################################################~n~n', []),
 						handleMenuInput(1,_).
 
-displayMainMenu(2):- 	displayGameTitle,
+displayMainMenu(2, _):- displayGameTitle,
 						format('# 1) First move must be made in the center of the board.                     #~n', []),
 						format('#                                                                            #~n', []),
 						format('# 2) Captures occur when, along any direction, two contiguous stones of a    #~n', []),
@@ -240,9 +241,9 @@ displayMainMenu(2):- 	displayGameTitle,
 						format('#                                                                            #~n', []),
 						format('##############################################################################~n~n', []),
 						format('Press any key to continue', []), read(_),
-						displayMainMenu.
+						displayMainMenu(0, _).
 						
-displayMainMenu(3).						
+displayMainMenu(3, _).						
 						
 displayMainMenu(4, Difficulty):- 	displayGameTitle,
 									format('#                             DIFFICULTY                                     #~n', []),
@@ -283,7 +284,7 @@ initGame(2):-	displayMainMenu(4, AIType),
 initGame(3):- 	displayMainMenu(4, AIType),
 				displayMainMenu(5, BoardSize),
 				startGame(BoardSize, AIType, AIType), !.
-initGame(4):- displayMainMenu.
+initGame(4):- 	displayMainMenu(0, _).
 					
 
 % Handles main menu input
@@ -291,7 +292,7 @@ initGame(4):- displayMainMenu.
 % +Option:  Option selected by the user
 % -Difficulty: Difficulty choosen by the user					
 handleMenuInput(0, _):- 	menuInput(Option),
-							displayMainMenu(Option).
+							displayMainMenu(Option, _).
 					
 handleMenuInput(1, _):- 	menuInput(Option),
 							initGame(Option).	
@@ -792,6 +793,7 @@ compareMoves(_, _, _, NewBoard2, NewCurrPlayer2, NewScore2, NewBoard2, NewCurrPl
 
 % Computes the score of a game state to quantify how well the game is for a player
 
+% +Size:            Board size
 % +CurrCaptureNo:	Number of captures by the current turn's player.
 % +CurrSequenceNo:	Number of pieces in a row the current turn's player has.
 % +NextCaptureNo:	Number of captures by the current player's opponent.
