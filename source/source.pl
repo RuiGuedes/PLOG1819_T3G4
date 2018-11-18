@@ -3,6 +3,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Finds the max of a list
+
 % ?Max - Maximum element of the list
 % +List - List to find the max on
 max(Max, [H|T]) :- max(Max, H, T).
@@ -73,6 +74,15 @@ boardSizeConverter(3,'13x13').
 boardSizeConverter(7,'7x7').
 boardSizeConverter(9,'9x9').
 boardSizeConverter(13,'13x13').
+
+% Winning conditions
+
+% +BoardSize:   Specifies the board size 
+% +NumCaptures: Number of captures needed to be made in order to win the game in the specified board size
+% +NumSequence: Number of pieces in a row needed in order to win the game in the specified board size
+winning_conditions(7 , 5 , 4).
+winning_conditions(9 , 7 , 4).
+winning_conditions(13, 10, 5).
 
 
 % Retrieves the dimensions of a rectangular board.
@@ -798,16 +808,11 @@ compareMoves(_, _, _, NewBoard2, NewCurrPlayer2, NewScore2, NewBoard2, NewCurrPl
 % +CurrSequenceNo:	Number of pieces in a row the current turn's player has.
 % +NextCaptureNo:	Number of captures by the current player's opponent.
 % +NextSequenceNo:	Number of pieces in a row the current player's opponent has.
-% -Score:			Score attributed to the game state in the interval [-100, 100], where a maximal score represents a better state for the current player.
-
-winning_conditions(7 , 5 , 4).
-winning_conditions(9 , 7 , 4).
-winning_conditions(13, 10, 5).
-	
+% -Score:			Score attributed to the game state in the interval [-100, 100], where a maximal score represents a better state for the current player.	
 value(Size, _, _, NextCaptureNo, NextSequenceNo, -100) :-	winning_conditions(Size, WinCaptureNo, WinSequenceNo),
-														(NextCaptureNo >= WinCaptureNo ; NextSequenceNo >= WinSequenceNo). % Must come first, otherwise AI may think it won when progressing through the tree when it lost before.
+															(NextCaptureNo >= WinCaptureNo ; NextSequenceNo >= WinSequenceNo). % Must come first, otherwise AI may think it won when progressing through the tree when it lost before.
 value(Size, CurrCaptureNo, CurrSequenceNo, _, _, 100)	 :-	winning_conditions(Size, WinCaptureNo, WinSequenceNo),
-														(CurrCaptureNo >= WinCaptureNo ; CurrSequenceNo >= WinSequenceNo).
+															(CurrCaptureNo >= WinCaptureNo ; CurrSequenceNo >= WinSequenceNo).
 value(_, CurrCaptureNo, CurrSequenceNo, NextCaptureNo, NextSequenceNo, Score) 	:-	Score = CurrCaptureNo - NextCaptureNo + CurrSequenceNo - NextSequenceNo .
 
 value(Size, player(_, _, CurrCaptureNo, CurrSequenceNo), player(_, _, NextCaptureNo, NextSequenceNo), Score) :- value(Size, CurrCaptureNo, CurrSequenceNo, NextCaptureNo, NextSequenceNo, Score).
