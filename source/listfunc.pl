@@ -799,7 +799,7 @@ compareMoves(_, _, _, NewBoard2, NewCurrPlayer2, NewScore2, NewBoard2, NewCurrPl
 % -Score:			Score attributed to the game state in the interval [-100, 100], where a maximal score represents a better state for the current player.
 
 winning_conditions(7 , 5 , 4).
-winning_conditions(9 , 7 , 6).
+winning_conditions(9 , 7 , 4).
 winning_conditions(13, 10, 5).
 	
 value(Size, _, _, NextCaptureNo, NextSequenceNo, -100) :-	winning_conditions(Size, WinCaptureNo, WinSequenceNo),
