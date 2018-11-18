@@ -664,7 +664,7 @@ capture(_, _, Board, Board, _, _, _, _, 0).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % API: 					aiDepth/2, choose_move/7, value/5
 
-% Auxiliary Predicates:	valid_moves/2, minimax/8, move/8, compare_moves/9
+% Auxiliary Predicates:	valid_moves/2, minimax/8, analyseMove/8, compareMoves/9
 
 
 % Corresponds the AI type with its depth (Bigger depth -> Higher Difficulty).
@@ -736,8 +736,8 @@ minimax(Board, BestBoard, MoveList, CurrPlayer, NextPlayer, BestCurrPlayer, Dept
 
 minimax(_	 , BestBoard, BestBoard, []		 , _		 , _		 , BestCurrPlayer, BestCurrPlayer, _	, BestScore, BestScore, _	 , _).
 minimax(Board, BestBoard, AccBoard,  [M | MS], CurrPlayer, NextPlayer, BestCurrPlayer, AccCurrPlayer,  Depth, BestScore, AccScore,  Alpha, Beta) :- 
-																												analyse_move(Board, NewBoard1, M, CurrPlayer, NextPlayer, NewCurrPlayer1, Depth, NewScore1, Alpha, Beta),
-																												compare_moves(	NewBoard1, NewCurrPlayer1, NewScore1, 
+																												analyseMove(Board, NewBoard1, M, CurrPlayer, NextPlayer, NewCurrPlayer1, Depth, NewScore1, Alpha, Beta),
+																												compareMoves(	NewBoard1, NewCurrPlayer1, NewScore1, 
 																																AccBoard,  AccCurrPlayer,  AccScore,
 																																MaxBoard,  MaxCurrPlayer,  MaxScore),
 																												!,
@@ -762,8 +762,8 @@ pruning(Board, BestBoard, MaxBoard, MS, CurrPlayer, NextPlayer, BestCurrPlayer, 
 % -NewCurrPlayer:	Internal Representation of the Player going to play in this game state after playing.
 % +Depth:			Depth of game states to analyze.
 % -Score:			Score of the resulting state - Range:[-100, 100].
-analyse_move(Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCurrPlayer, 0, 	Score, _, _)		:- !, move(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, Score). % Board step inherently calls value.
-analyse_move(Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score, Alpha, Beta)	:- 	move(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, _),
+analyseMove(Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCurrPlayer, 0, 	Score, _, _)		:- !, move(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, Score). % Board step inherently calls value.
+analyseMove(Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCurrPlayer, Depth, Score, Alpha, Beta)	:- 	move(Board, NewBoard, CurrPlayer, NextPlayer, NewCurrPlayer, Line, Column, _),
 																														DecDepth is Depth - 1, !,
 																														% Due to the nature of the value function, we can simply swap the players and negate its maximum score to get the minimum.
 																														% The same applies to the Alpha and Beta values (The minimizing player becomes the maximizing player).
@@ -785,8 +785,8 @@ analyse_move(Board, NewBoard, move(Line, Column), CurrPlayer, NextPlayer, NewCur
 % -BestBoard:		Internal Representation of the best of both boards.
 % -BestCurrPlayer:	Internal Representation of the Player in the best of both states.
 % -BestScore:		Score of the best of both states - Range: [-100, 100].
-compare_moves(NewBoard1, NewCurrPlayer1, NewScore1, _, _, NewScore2, NewBoard1, NewCurrPlayer1, NewScore1) :- NewScore1 > NewScore2, !.
-compare_moves(_, _, _, NewBoard2, NewCurrPlayer2, NewScore2, NewBoard2, NewCurrPlayer2, NewScore2).
+compareMoves(NewBoard1, NewCurrPlayer1, NewScore1, _, _, NewScore2, NewBoard1, NewCurrPlayer1, NewScore1) :- NewScore1 > NewScore2, !.
+compareMoves(_, _, _, NewBoard2, NewCurrPlayer2, NewScore2, NewBoard2, NewCurrPlayer2, NewScore2).
 
 													
 
