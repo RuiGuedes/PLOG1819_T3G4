@@ -45,7 +45,7 @@ check_boundaries(LineSize, ColSize, LineNo, ColNo):- 	LineNo >= 0, LineNo < Line
 
 % Retrieves element from a certain position on the puzzle
 
-% +Puzzle:	Puzzle cointaing the element to be retrieved
+% +Puzzle:	Puzzle containing the element to be retrieved
 % +LineNo:  Line number
 % +ColNo:   Column number
 % -Element: Element to be retrieved 
@@ -256,7 +256,7 @@ solve_puzzle(_).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Constraints %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% API: apply_puzzle_constraints/7, apply_row_constraints/4 , apply_constraints/5, apply_line_constraints/7
+% API: apply_puzzle_constraints/7, apply_row_constraints/4 , apply_constraints/5, apply_line_constraints/7, apply_circle_remaining_constraint/2
 
 % Applies the necessary constraints to the puzzle
 
@@ -270,6 +270,7 @@ solve_puzzle(_).
 apply_puzzle_constraints(Options, Vars, Puzzle, PuzzleInfo, LineSize, ColSize, LastLine):- 	domain(Vars, 0, 9),
 																							apply_row_constraints(Puzzle, LineSize, LastLine, 0),
 																							apply_constraints(Puzzle, PuzzleInfo, 0, LineSize, ColSize),
+																							apply_circle_remaining_constraint(Puzzle, PuzzleInfo),
 																							labeling(Options, Vars). % Labeling options are the default
 																		
 % Applies row row contraint by making sure that the sum of all elements in each row is equal to a certain value
@@ -390,11 +391,8 @@ apply_element_constraint(4, Var, Puzzle, _, LineNo, ColNo):-	Var #\= 0,
 
 % +Type: 		Specifies the type of the variable
 % +Var:         Variable to apply the constraints
-% +Puzzle:   	Internal Representation of the puzzle (variables)
-% +PuzzleInfo:  Internal Representation of the puzzle (facts)
-apply_element_constraint(5, Var, Puzzle, PuzzleInfo, _, _):- 	Var mod 3 #\= 0, % Var is not multiple of 3
-																flatten(Puzzle, PuzzleFlatten), flatten(PuzzleInfo, PuzzleInfoFlatten),
-																apply_circle_constraints(PuzzleFlatten, PuzzleInfoFlatten, Var, 5).
+apply_element_constraint(5, Var, _, _, _, _):- 	Var mod 3 #\= 0. % Var is not multiple of 3
+																
 																	
 % Chess Knight element constraints
 
@@ -541,20 +539,36 @@ apply_triangle_constraints(_, _, _, _, _, _).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Circle Constraints %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% API: apply_circle_constraints/4
+% API: apply_circle_remaining_constraint/2, get_all_circles/4
+% Auxiliary predicates: all_equal/1
 
 % Applies remaining constraints to the circle element
 
 % +Puzzle:   	Internal Representation of the puzzle (variables)
 % +PuzzleInfo:  Internal Representation of the puzzle (facts)	
-% +Var:         Variable to apply the constraint
-% +Circle:		Circle type								
-apply_circle_constraints([], _, _, _):- !.
-apply_circle_constraints([H1|T1], [Circle|T2], Var, Circle):- 	Var #= H1,
-																apply_circle_constraints(T1, T2, Var, Circle).
-apply_circle_constraints([_|T1], [H2|T2], Var, Circle):- 	Circle \= H2,
-															apply_circle_constraints(T1, T2, Var, Circle).
+apply_circle_remaining_constraint(Puzzle, PuzzleInfo):- flatten(Puzzle, PuzzleFlatten), flatten(PuzzleInfo, PuzzleInfoFlatten),
+														get_all_circles(PuzzleFlatten, PuzzleInfoFlatten, AllCircles, 5),
+														all_equal(AllCircles).
 
+% Retrieves all circle variables present on the puzzle
+														
+% +Puzzle:   	Internal Representation of the puzzle (variables)
+% +PuzzleInfo:  Internal Representation of the puzzle (facts)	
+% -Circles:     List of all circles
+% +Circle:		Circle type								
+get_all_circles([], _, [], _):- !.
+get_all_circles([H1|T1], [Circle|T2], [H1|Rest], Circle):- get_all_circles(T1, T2, Rest, Circle).
+get_all_circles([_|T1], [H2|T2], AllCircles, Circle):- Circle \= H2,
+																get_all_circles(T1, T2, AllCircles, Circle).
+
+% Applies constraint that ensures that all elements are equal
+
+% List:	List containing all elements where constraint will be applied														
+all_equal([_]):- !.
+all_equal([H1,H2|T]):- 	H1 #= H2,
+						all_equal([H2|T]).
+																												
+															
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Chess Knight Constraints %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
