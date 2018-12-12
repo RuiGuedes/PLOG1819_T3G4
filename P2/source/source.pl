@@ -195,7 +195,7 @@ initial_sep_line('final'):- write('|-----').
 display_sep_line(Size, State):- initial_sep_line(State), 
 								disp_sep_line(Size, State).						
 
-disp_sep_line(1, _):- 		write('|\n').
+disp_sep_line(1, _):- 			write('|\n').
 disp_sep_line(Size, State):- 	sep_line(State),
 								DecSize is Size - 1,
 								disp_sep_line(DecSize, State).	
@@ -227,31 +227,38 @@ solve_puzzle(Options, PuzzleID):- 	display_puzzle_info,
 									length(FirstLine, ColSize),
 									% ---- Puzzle information - END ----
 									
-									% ---- Variable puzzle generation - INIT ----					
-									build_variable_puzzle(LineSize, ColSize, Puzzle),
-									flatten(Puzzle, Vars),
-									
-									nth1(TmpLineSize, PuzzleInfo, LastLine),
-									% ---- Variable puzzle generation - END ----
-									
-									display_puzzle(PuzzleInfo, 'initial'), nl,
-									
-									% ---- Solving puzzle - INIT ----
-									reset_timer, !,						
-									apply_puzzle_constraints(Options, Vars, Puzzle, PuzzleInfo, LineSize, ColSize, LastLine),													
-									display_time,
-									% ---- Solving puzzle - END ----
-															
-									append(Puzzle, [LastLine], TMP), !,						
-									display_puzzle(TMP, 'final'), nl, 
-									
-									% ---- Statistics ----
-									display_statistics.	
+									solve(Options, PuzzleInfo, LineSize, ColSize, TmpLineSize).
 
 % Solves a certain puzzle dynamically generated
 
 % +Options: Labeling options to optimize solution									
-solve_puzzle(_).
+solve_puzzle(Options):- 			display_puzzle_info.
+
+									% ---- Puzzle dynamic generation - INIT ----
+									% TODO
+									% ---- Puzzle dynamic generation - END ----
+									% solve(Options, PuzzleInfo, LineSize, ColSize, TmpLineSize).
+
+solve(Options, PuzzleInfo, LineSize, ColSize, TmpLineSize):- 	% ---- Variable puzzle generation - INIT ----					
+																build_variable_puzzle(LineSize, ColSize, Puzzle),
+																flatten(Puzzle, Vars),
+																
+																nth1(TmpLineSize, PuzzleInfo, LastLine),
+																% ---- Variable puzzle generation - END ----
+																
+																display_puzzle(PuzzleInfo, 'initial'), nl,
+																
+																% ---- Solving puzzle - INIT ----
+																reset_timer, !,						
+																apply_puzzle_constraints(Options, Vars, Puzzle, PuzzleInfo, LineSize, ColSize, LastLine),													
+																display_time,
+																% ---- Solving puzzle - END ----
+																						
+																append(Puzzle, [LastLine], TMP), !,						
+																display_puzzle(TMP, 'final'), nl, 
+																
+																% ---- Statistics ----
+																display_statistics.	
 				
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Constraints %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
