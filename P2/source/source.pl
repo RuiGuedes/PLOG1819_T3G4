@@ -253,12 +253,16 @@ solve(Options, PuzzleInfo, LineSize, ColSize, TmpLineSize):- 	% ---- Variable pu
 																apply_puzzle_constraints(Options, Vars, Puzzle, PuzzleInfo, LineSize, ColSize, LastLine),													
 																display_time,
 																% ---- Solving puzzle - END ----
-																						
-																append(Puzzle, [LastLine], TMP), !,						
-																display_puzzle(TMP, 'final'), nl, 
 																
 																% ---- Statistics ----
-																display_statistics.	
+																display_statistics,
+																
+																% ---- Show solution ---- %
+																write('Press any key to show solution ...'),
+																get_char(_),
+																
+																append(Puzzle, [LastLine], TMP), !,						
+																display_puzzle(TMP, 'final'), nl.																											
 				
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Constraints %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -329,13 +333,9 @@ apply_line_constraints(Puzzle, PuzzleInfo, Line, LineInfo, CurrLine, CurrCol, Co
 																
 % Neighbors clockwise access - neighbor(Direction, LineInc, ColInc)																
 neighbor(0, -1,  0). % Up
-neighbor(1, -1,  1). % Up-Right
-neighbor(2,  0,  1). % Right
-neighbor(3,  1,  1). % Down-Right
-neighbor(4,  1,  0). % Down
-neighbor(5,  1, -1). % Down-Left
-neighbor(6,  0, -1). % Left
-neighbor(7, -1, -1). % Up-Left
+neighbor(1,  0,  1). % Right
+neighbor(2,  1,  0). % Down
+neighbor(3,  0, -1). % Left
 																														
 																
 % Empty element constraints
@@ -436,12 +436,12 @@ apply_element_constraint(7, Var, Puzzle, PuzzleInfo, LineNo, ColNo):- 	Puzzle = 
 % +LineNo:	 	Line number
 % +ColNo:	 	Column number
 % +Direction:	Direction where it should apply the constraint									
-apply_star_constraints(_, _, _, _, _, 8):- !.															
+apply_star_constraints(_, _, _, _, _, 4):- !.															
 apply_star_constraints(Puzzle, LineSize, ColSize, LineNo, ColNo, Direction):- 	neighbor(Direction, LineInc, ColInc),
 																				NewLineNo is LineNo + LineInc,
 																				NewColNo is ColNo + ColInc, !,
 																				star_constraint(Puzzle, LineSize, ColSize, NewLineNo, NewColNo), !,
-																				NewDirection is Direction + 2, % Checking only orthogonal elements
+																				NewDirection is Direction + 1, 
 																				apply_star_constraints(Puzzle, LineSize, ColSize, LineNo, ColNo, NewDirection).
 											
 % Star constraint
@@ -472,11 +472,11 @@ star_constraint(_, _, _, _, _).
 % +LineNo:	 	Line number
 % +ColNo:	 	Column number
 % +Direction:	Direction where it should apply the constraint		
-apply_square_constraints(_, _, _, _, _, _, _, 8):- !.
+apply_square_constraints(_, _, _, _, _, _, _, 4):- !.
 apply_square_constraints(Puzzle, PuzzleInfo, Var, LineSize, ColSize, LineNo, ColNo, Direction):- 	neighbor(Direction, LineInc, ColInc),
 																									NewLineNo is LineNo + LineInc, NewColNo is ColNo + ColInc, !,
 																									square_constraint(Puzzle, PuzzleInfo, Var, LineSize, ColSize, NewLineNo, NewColNo), !,
-																									NewDirection is Direction + 2, % Checking only orthogonal elements
+																									NewDirection is Direction + 1,
 																									apply_square_constraints(Puzzle, PuzzleInfo, Var, LineSize, ColSize, LineNo, ColNo, NewDirection).
 
 % Square constraint
@@ -650,7 +650,7 @@ apply_heart_constraints(Var, Puzzle, PuzzleInfo, LineSize, ColSize, LineNo, ColN
 % +ColNo:	 	Column number
 % -Neighbors:	Heart neighbors
 % +Direction:	Direction where it should apply the constraint																		
-get_neighboring_hearts(_, _, _, _, _, _, [], 8):- !.																
+get_neighboring_hearts(_, _, _, _, _, _, [], 4):- !.																
 get_neighboring_hearts(Puzzle, PuzzleInfo, LineSize, ColSize, LineNo, ColNo, [Neighbor|Rest], Direction):-	neighbor(Direction, LineInc, ColInc),
 																											NewLineNo is LineNo + LineInc,	NewColNo is ColNo + ColInc,
 																											check_boundaries(LineSize, ColSize, NewLineNo, NewColNo),	
