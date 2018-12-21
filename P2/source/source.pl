@@ -41,7 +41,7 @@ build_variable_puzzle(LineSize, ColSize, [Row|T]):- length(Row, ColSize),
 % +ColSize:	 Max column number
 % +LineNo:	 Line number
 % +ColNo:	 Column number						
-check_boundaries(LineSize, ColSize, LineNo, ColNo):- 	LineNo >= 0, LineNo < LineSize, 
+check_boundaries(LineSize, ColSize, LineNo, ColNo):-	LineNo >= 0, LineNo < LineSize, 
 														ColNo >= 0, ColNo < ColSize, !.							
 
 % Retrieves element from a certain position on the puzzle
@@ -53,10 +53,16 @@ check_boundaries(LineSize, ColSize, LineNo, ColNo):- 	LineNo >= 0, LineNo < Line
 get_element(Puzzle, LineNo, ColNo, Element):- 	NewColNo is ColNo + 1,
 												nth0(LineNo, Puzzle, Line), 												
 												element(NewColNo, Line, Element), !.
+
+% Retrieves a known number from a certain position and direction of generated puzzle numbers												
+get_num_by_direction(Number, PuzzleNums, L, C, LI, CI, LS, CS):-	NL is LS - L + LI, NC is CS - C + CI,
+																	!,
+																	check_boundaries(LS, CS, NL, NC),
+																	nth0(NL, PuzzleNums, PuzzleLine),
+																	nth0(NC, PuzzleLine, Number),												
 												
 % Safer implementation of sum(+Xs, +RelOp, ?Value) that checks if Xs is empty first
 safe_sum([], _, _).
-safe_sum([_], _, 10) :- write('fudeu :)'), fail.
 safe_sum(Xs, RelOp, Value):- sum(Xs, RelOp, Value).
 
 % Resets timer
@@ -159,7 +165,7 @@ display_puzzle(Puzzle, State):-	Puzzle = [FirstLine | _],
 % +Puzzle:   Internal Representation of the puzzle to be displayed.								
 % +State:    Display state: initial or final														
 display_puzzle(_, 1, _, _, _, _).
-display_puzzle([H], LineNo, _, LineSize, Puzzle, State):-	display_line(H, LineNo, LineSize, Puzzle, State).											
+display_puzzle([H], LineNo, _, LineSize, Puzzle, State):-			display_line(H, LineNo, LineSize, Puzzle, State).											
 display_puzzle([H|T], LineNo, ColSize, LineSize, Puzzle, State):-	display_line(H, LineNo, LineSize, Puzzle, State),										
 																	display_sep_line(ColSize, State),
 																	NextLineNumber is LineNo - 1,
@@ -245,25 +251,43 @@ generate_elements([N|NS], [E|ES], PuzzleNums, LineSize, ColSize):- 	generate_row
 									
 generate_row_elements([], [], _, _, 0).
 generate_row_elements([N|NS], [E|ES], PuzzleNums, LineSize, ColSize):- 	generate_element(N, E, PuzzleNums, LineSize, ColSize), !,
+																		write('   k   '),
 																		DecColSize is ColSize - 1,
 																		generate_row_elements(NS, ES, PuzzleNums, LineSize, DecColSize).
+																		
+% Star Element
+generate_element(N, 1, PuzzleNums, L, C):- 	member(N, [2, 3, 5, 7]),
+											PuzzleNums = [Line | Rest], length(Rest, LS), length(Line, CS),
+											write('ha'),
+											star_validate(PuzzleNums, L, C, LS, CS, 0).
+% Chess Element
+generate_element(N, 6, PuzzleNums, L, C):- 	PuzzleNums = [Line | Rest], length(Rest, LS), length(Line, CS),
+											write('he'),
+											chess_validate(N, PuzzleNums, L, C, LS, CS, 0, 0).
+% No Element											
+generate_element(_, 0, _, _, _):- write('eheh').
 
-generate_element(N, 6, PuzzleNums, L, C):- PuzzleNums = [Line | _], length(PuzzleNums, LS), length(Line, CS),
-										   chess_validate(N, PuzzleNums, L, C, LS, CS, 0, 0).
-generate_element(_, 0, _, _, _).
-
-
-chess_validate(N, PuzzleNums, L, C, LS, CS, Dir, Sum):-	attack_range(Dir, LI, CI),
-														NL is L + LI, NC is C + CI,
-														check_boundaries(LS, CS, NL, NC),
-														LPos is LS - L, CPos is CS - C,
-														nth0(LPos, PuzzleNums, PuzzleLine),
-														nth0(CPos, PuzzleLine, Element),
+star_validate(PuzzleNums, L, C, LS, CS, Dir):-	neighbor(Dir, LI, CI),
+												get_num_by_direction(Number, PuzzleNums, L, C, LI, CI, LS, CS),
+												!,
+												member(Number, [0, 4, 6, 8, 9]),
+												NewDir is Dir + 1,
+												star_validate(PuzzleNums, L, C, LS, CS, NewDir).
+star_validate(_, _, _, _, _, 4):- !.												
+star_validate(PuzzleNums, L, C, LS, CS, Dir):-	NewDir is Dir + 1, !,
+												Dir < 3,
+												star_validate(PuzzleNums, L, C, LS, CS, NewDir).
+												
+chess_validate(N, PuzzleNums, L, C, LS, CS, Dir, Sum):-	write(Dir), attack_range(Dir, LI, CI),
+														get_num_by_direction(Number, PuzzleNums, L, C, LI, CI, LS, CS),
 														!,
-														NewSum is Sum + (Element mod 1),
+														NewSum is Sum + (Number mod 1),
 														NewDir is Dir + 1,
 														chess_validate(N, PuzzleNums, L, C, LS, CS, NewDir, NewSum).
 chess_validate(N, _, _, _, _, _, 8, N):- !.
+chess_validate(N, PuzzleNums, L, C, LS, CS, Dir, Sum):-	NewDir is Dir + 1, !,
+														Dir < 7,
+														chess_validate(N, PuzzleNums, L, C, LS, CS, NewDir, Sum).														
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Puzzle Solution %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -516,7 +540,7 @@ apply_star_constraints(Puzzle, LineSize, ColSize, LineNo, ColNo, Direction):- 	n
 % +ColNo:	 	Column number										
 star_constraint(Puzzle, LineSize, ColSize, LineNo, ColNo):-	check_boundaries(LineSize, ColSize, LineNo, ColNo),
 															get_element(Puzzle, LineNo, ColNo, Neighbor),
-															Neighbor #\= 1, Neighbor #\= 2, Neighbor #\= 3, Neighbor #\= 5, Neighbor #\= 7.																	
+															Neighbor in {0, 4, 6, 8, 9}.
 star_constraint(_, _, _, _, _).	
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
