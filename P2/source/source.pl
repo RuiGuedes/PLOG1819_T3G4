@@ -225,24 +225,18 @@ display_statistics:-	write('Statistics: '), nl,  nl,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Puzzle Generation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 generate_puzzle(PuzzleInfo, Size):-	generate_numbers(PuzzleNums, Size, Size, []), !,
-									write('hue'),
 									generate_elements(PuzzleNums, PuzzleInfo, PuzzleNums, Size, Size).
 
 									
 generate_numbers([RowSums], 0, _, RowSums).
 generate_numbers([H|T], LineSize, ColSize, Sums):-	generate_num_row(H, ColSize, 0, Sum),
-														DecLineSize is LineSize - 1,
-														generate_numbers(T, DecLineSize, ColSize, [Sum|Sums]).
+													DecLineSize is LineSize - 1,
+													generate_numbers(T, DecLineSize, ColSize, [Sum|Sums]).
 generate_num_row([], 0, Sum, Sum).
 generate_num_row([H|T], ColSize, Acc, Sum):-	random(0, 9, H),
 												DecColSize is ColSize - 1,
 												NewAcc is Acc + H,
 												generate_num_row(T, DecColSize, NewAcc, Sum).
-								
-generate_sums([], 0).
-generate_sums([H|T], ColSize):- 	H in 0..10000,
-									DecColSize is ColSize - 1,
-									generate_sums(T, DecColSize).
 
 generate_elements([RowSums], [RowSums], _, 0, _).
 generate_elements([N|NS], [E|ES], PuzzleNums, LineSize, ColSize):- 	generate_row_elements(N, E, PuzzleNums, LineSize, ColSize), !,
@@ -251,22 +245,37 @@ generate_elements([N|NS], [E|ES], PuzzleNums, LineSize, ColSize):- 	generate_row
 									
 generate_row_elements([], [], _, _, 0).
 generate_row_elements([N|NS], [E|ES], PuzzleNums, LineSize, ColSize):- 	generate_element(N, E, PuzzleNums, LineSize, ColSize), !,
-																		write('   k   '),
 																		DecColSize is ColSize - 1,
 																		generate_row_elements(NS, ES, PuzzleNums, LineSize, DecColSize).
+
+% Diamond Element
+generate_element(N, 3, PuzzleNums, L, C):- 	0 =:= N mod 2,
+											length(PuzzleNums, IncLS),
+											LI is IncLS - L,
+											nth1(LI, PuzzleNums, Line),
+											sublist(Line, LeftNums, 0, _, C),
+											sumlist(LeftNums, N).
 																		
 % Star Element
 generate_element(N, 1, PuzzleNums, L, C):- 	member(N, [2, 3, 5, 7]),
 											PuzzleNums = [Line | Rest], length(Rest, LS), length(Line, CS),
-											write('ha'),
 											star_validate(PuzzleNums, L, C, LS, CS, 0).
+											
 % Chess Element
 generate_element(N, 6, PuzzleNums, L, C):- 	PuzzleNums = [Line | Rest], length(Rest, LS), length(Line, CS),
-											write('he'),
 											chess_validate(N, PuzzleNums, L, C, LS, CS, 0, 0).
+											
+% Triangle Element
+generate_element(N, 4, PuzzleNums, L, C):- 	N > 0,
+											PuzzleNums = [Line | Rest], length(Rest, LS), length(Line, CS),
+											get_num_by_direction(Above, PuzzleNums, L, C, -1, 0, LS, CS),
+											0 =:= Above mod 2,
+											N < Above.											
+											
 % No Element											
-generate_element(_, 0, _, _, _):- write('eheh').
+generate_element(_, 0, _, _, _).
 
+% Neighbor Validations
 star_validate(PuzzleNums, L, C, LS, CS, Dir):-	neighbor(Dir, LI, CI),
 												get_num_by_direction(Number, PuzzleNums, L, C, LI, CI, LS, CS),
 												!,
@@ -274,8 +283,8 @@ star_validate(PuzzleNums, L, C, LS, CS, Dir):-	neighbor(Dir, LI, CI),
 												NewDir is Dir + 1,
 												star_validate(PuzzleNums, L, C, LS, CS, NewDir).
 star_validate(_, _, _, _, _, 4):- !.												
-star_validate(PuzzleNums, L, C, LS, CS, Dir):-	NewDir is Dir + 1, !,
-												Dir < 3,
+star_validate(PuzzleNums, L, C, LS, CS, Dir):-	!, Dir < 3,
+												NewDir is Dir + 1,
 												star_validate(PuzzleNums, L, C, LS, CS, NewDir).
 												
 chess_validate(N, PuzzleNums, L, C, LS, CS, Dir, Sum):-	write(Dir), attack_range(Dir, LI, CI),
@@ -285,8 +294,8 @@ chess_validate(N, PuzzleNums, L, C, LS, CS, Dir, Sum):-	write(Dir), attack_range
 														NewDir is Dir + 1,
 														chess_validate(N, PuzzleNums, L, C, LS, CS, NewDir, NewSum).
 chess_validate(N, _, _, _, _, _, 8, N):- !.
-chess_validate(N, PuzzleNums, L, C, LS, CS, Dir, Sum):-	NewDir is Dir + 1, !,
-														Dir < 7,
+chess_validate(N, PuzzleNums, L, C, LS, CS, Dir, Sum):-	!, Dir < 7,
+														NewDir is Dir + 1,
 														chess_validate(N, PuzzleNums, L, C, LS, CS, NewDir, Sum).														
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
