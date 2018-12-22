@@ -225,11 +225,11 @@ display_statistics:-	write('Statistics: '), nl,  nl,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Puzzle Generation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 generate_puzzle(PuzzleInfo, Size):-	generate_numbers(PuzzleNums, Size, Size, []), !,
-									display_puzzle(PuzzleNums, 'final'),
+									% display_puzzle(PuzzleNums, 'final'), % Debug 
 									generate_elements(PuzzleNums, PuzzleInfo, PuzzleNums, Size, Size).
 
 									
-generate_numbers([RowSums], 0, _, RevRowSums):- reverse(RevRowSums, RowSums).
+generate_numbers([RowSums], 0, _, RevRowSums):- 	reverse(RevRowSums, RowSums).
 generate_numbers([H|T], LineSize, ColSize, Sums):-	generate_num_row(H, ColSize, 0, Sum),
 													DecLineSize is LineSize - 1,
 													generate_numbers(T, DecLineSize, ColSize, [Sum|Sums]).
@@ -296,7 +296,7 @@ star_validate(PuzzleNums, L, C, LS, CS, Dir):-	!, Dir < 3,
 												NewDir is Dir + 1,
 												star_validate(PuzzleNums, L, C, LS, CS, NewDir).
 												
-chess_validate(N, PuzzleNums, L, C, LS, CS, Dir, Sum):-	write(Dir), attack_range(Dir, LI, CI),
+chess_validate(N, PuzzleNums, L, C, LS, CS, Dir, Sum):-	attack_range(Dir, LI, CI),
 														get_num_by_direction(Number, PuzzleNums, L, C, LI, CI, LS, CS),
 														member(Number, [0, 2, 4, 6, 8]),
 														!,
@@ -390,14 +390,10 @@ solve(Options, PuzzleInfo, LineSize, ColSize, TmpLineSize):- 	% ---- Variable pu
 % +ColSize: 	Number of columns
 % +LastLine:	Internal Representation of the last line of the puzzle to be displayed (fact)
 apply_puzzle_constraints(Options, Vars, Puzzle, PuzzleInfo, LineSize, ColSize, LastLine):- 	domain(Vars, 0, 9), !,
-																							write('lal'),
 																							apply_row_constraints(Puzzle, LineSize, LastLine, 0), !,
-																							write('lel'),
 																							apply_constraints(Puzzle, PuzzleInfo, 0, LineSize, ColSize), !,
-																							write('lol'),
 																							apply_circle_remaining_constraint(Puzzle, PuzzleInfo), !,
-																							write('lul'),
-																							write(Vars),
+																							write('Starting Labeling (Debug)'),
 																							labeling(Options, Vars). % Labeling options are the default
 																		
 % Applies row row contraint by making sure that the sum of all elements in each row is equal to a certain value
@@ -420,7 +416,7 @@ apply_row_constraints([H|T], LineSize, LastLine, CurrLine):- 	nth0(CurrLine, Las
 % +LineSize: 	Number of lines
 % +ColSize: 	Number of columns
 apply_constraints(_, _, LineSize, LineSize, _):- !.
-apply_constraints(Puzzle, PuzzleInfo, CurrLine, LineSize, ColSize):- 	write('r'), nth0(CurrLine, Puzzle, Line), nth0(CurrLine, PuzzleInfo, LineInfo), !,
+apply_constraints(Puzzle, PuzzleInfo, CurrLine, LineSize, ColSize):- 	nth0(CurrLine, Puzzle, Line), nth0(CurrLine, PuzzleInfo, LineInfo), !,
 																		apply_line_constraints(Puzzle, PuzzleInfo, Line, LineInfo, CurrLine, 0, ColSize),
 																		NextLine is CurrLine + 1,
 																		apply_constraints(Puzzle, PuzzleInfo, NextLine, LineSize, ColSize).
@@ -439,7 +435,6 @@ apply_line_constraints(Puzzle, PuzzleInfo, Line, LineInfo, CurrLine, CurrCol, Co
 																							nth0(CurrCol, LineInfo, VarInfo),
 																							element(NextCol, Line, Var), !,
 																							apply_element_constraint(VarInfo, Var, Puzzle, PuzzleInfo, CurrLine, CurrCol), !,
-																							write('e'),
 																							apply_line_constraints(Puzzle, PuzzleInfo, Line, LineInfo, CurrLine, NextCol, ColSize).
 																						
 
@@ -624,7 +619,6 @@ square_constraint(_, _, _, _, _, _, _).
 % +LineNo:	 Line number
 % +ColNo:	 Column number
 apply_diamond_constraints(Puzzle, Var, LineNo, ColNo):-	nth0(LineNo, Puzzle, Line),
-														write('hue'),
 														get_left_elements(Line, 0, ColNo, LeftElements),
 														safe_sum(LeftElements, #=, Var).
 apply_diamond_constraints(_, Var, _, _):- Var #= 9.
@@ -636,7 +630,7 @@ apply_diamond_constraints(_, Var, _, _):- Var #= 9.
 % +ColNo:	 	 Element column number						
 % -LeftElements: Elements on the left								
 get_left_elements(_, ColNo, ColNo, []):- !.				
-get_left_elements([H|T], CurrCol, ColNo, [H|Rest]):-	NewCurrCol is CurrCol + 1, write(CurrCol), !,	
+get_left_elements([H|T], CurrCol, ColNo, [H|Rest]):-	NewCurrCol is CurrCol + 1, !,	
 														get_left_elements(T, NewCurrCol, ColNo, Rest).									
 														
 
@@ -674,7 +668,6 @@ apply_triangle_constraints(_, _, _, _, _, _).
 % +PuzzleInfo:  Internal Representation of the puzzle (facts)	
 apply_circle_remaining_constraint(Puzzle, PuzzleInfo):- flatten(Puzzle, PuzzleFlatten), flatten(PuzzleInfo, PuzzleInfoFlatten),
 														get_all_circles(PuzzleFlatten, PuzzleInfoFlatten, AllCircles, 5),
-														write(AllCircles),
 														all_equal(AllCircles).
 
 % Retrieves all circle variables present on the puzzle
@@ -732,14 +725,14 @@ apply_chess_knight_constraints(Var, Puzzle, LineSize, ColSize, LineNo, ColNo):-	
 % -Elements:	Attack range elements
 % +Direction:	Direction where it should apply the constraint																						
 get_attack_range_elements(_, _, _, _, _, [], 8):- !.
-get_attack_range_elements(Puzzle, LineSize, ColSize, LineNo, ColNo, [Result|Rest], Direction):- 	write('fds1'), attack_range(Direction, LineInc, ColInc),
+get_attack_range_elements(Puzzle, LineSize, ColSize, LineNo, ColNo, [Result|Rest], Direction):- 	attack_range(Direction, LineInc, ColInc),
 																									NewLineNo is LineNo + LineInc,	NewColNo is ColNo + ColInc,
 																									check_boundaries(LineSize, ColSize, NewLineNo, NewColNo),	
 																									get_element(Puzzle, NewLineNo, NewColNo, Element),
 																									Element mod 2 #= 0 #<=> Result,	% If element is even then Result will be equal to 1. Otherwise Result is equal to 0
 																									NewDirection is Direction + 1,
 																									get_attack_range_elements(Puzzle, LineSize, ColSize, LineNo, ColNo, Rest, NewDirection).
-get_attack_range_elements(Puzzle, LineSize, ColSize, LineNo, ColNo, Elements, Direction):-	write('fds2'), NewDirection is Direction + 1,
+get_attack_range_elements(Puzzle, LineSize, ColSize, LineNo, ColNo, Elements, Direction):-	NewDirection is Direction + 1,
 																							get_attack_range_elements(Puzzle, LineSize, ColSize, LineNo, ColNo, Elements, NewDirection).																				
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -771,7 +764,7 @@ apply_heart_constraints(Var, Puzzle, PuzzleInfo, LineSize, ColSize, LineNo, ColN
 % -Neighbors:	Heart neighbors
 % +Direction:	Direction where it should apply the constraint																		
 get_neighboring_hearts(_, _, _, _, _, _, [], 4):- !.																
-get_neighboring_hearts(Puzzle, PuzzleInfo, LineSize, ColSize, LineNo, ColNo, [Neighbor|Rest], Direction):-	write('1fds'), neighbor(Direction, LineInc, ColInc),
+get_neighboring_hearts(Puzzle, PuzzleInfo, LineSize, ColSize, LineNo, ColNo, [Neighbor|Rest], Direction):-	neighbor(Direction, LineInc, ColInc),
 																											NewLineNo is LineNo + LineInc,	NewColNo is ColNo + ColInc,
 																											check_boundaries(LineSize, ColSize, NewLineNo, NewColNo),	
 																											get_element(PuzzleInfo, NewLineNo, NewColNo, NeighborInfo),
@@ -779,5 +772,5 @@ get_neighboring_hearts(Puzzle, PuzzleInfo, LineSize, ColSize, LineNo, ColNo, [Ne
 																											get_element(Puzzle, NewLineNo, NewColNo, Neighbor),
 																											NewDirection is Direction + 1,
 																											get_neighboring_hearts(Puzzle, PuzzleInfo, LineSize, ColSize, LineNo, ColNo, Rest, NewDirection).
-get_neighboring_hearts(Puzzle, PuzzleInfo, LineSize, ColSize, LineNo, ColNo, Neighbors, Direction):-	write('2fds'), NewDirection is Direction + 1,
+get_neighboring_hearts(Puzzle, PuzzleInfo, LineSize, ColSize, LineNo, ColNo, Neighbors, Direction):-	NewDirection is Direction + 1,
 																										get_neighboring_hearts(Puzzle, PuzzleInfo, LineSize, ColSize, LineNo, ColNo, Neighbors, NewDirection).
