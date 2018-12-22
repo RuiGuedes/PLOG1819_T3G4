@@ -62,6 +62,10 @@ get_num_by_direction(Number, PuzzleNums, L, C, LI, CI, LS, CS):-	NL is LS - L + 
 																	nth0(NC, PuzzleLine, Number),												
 												
 % Safer implementation of sum(+Xs, +RelOp, ?Value) that checks if Xs is empty first
+
+% +Xs:	  List of elements to be constrainted
+% +RelOp: Operation to be made 
+% -Value: Value which sum must be equal to
 safe_sum([], _, _).
 safe_sum(Xs, RelOp, Value):- sum(Xs, RelOp, Value).
 
@@ -214,8 +218,7 @@ disp_sep_line(Size, State):- 	sep_line(State),
 								
 % Display time							
 display_time:-	statistics(walltime,[_,T]),
-				TS is ((T//10)*10)/1000,
-				nl, write('Solving Time: '), write(TS), write('s'), nl, nl.
+				nl, write('Solving Time: '), write(T), write('ms'), nl, nl.
 						
 % Display statistics						
 display_statistics:-	write('Statistics: '), nl,  nl,
@@ -224,32 +227,71 @@ display_statistics:-	write('Statistics: '), nl,  nl,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Puzzle Generation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-generate_puzzle(PuzzleInfo, Size):-	generate_numbers(PuzzleNums, Size, Size, []), !,
-									% display_puzzle(PuzzleNums, 'final'), % Debug 
+% API: generate_puzzle/2, generate_numbers/3, generate_num_row/4, generate_elements/5, generate_row_elements/5 generate_element/5
+%      star_validate/6 , chess_validate/8, square_validate/7
+
+% Dynamically generates a new puzzle
+
+% -PuzzleInfo:	Puzzle generated
+% +Size:		Size of the puzzle
+generate_puzzle(PuzzleInfo, Size):-	generate_numbers(PuzzleNums, Size, Size, []), !,									
 									generate_elements(PuzzleNums, PuzzleInfo, PuzzleNums, Size, Size).
 
-									
+
+% Generates random numbers for the whole puzzle
+
+% -PuzzleNums:	Puzzle with numbers generated
+% +LineSize:	Number of lines
+% +ColSize:     Number of columns
+% +Sums:		Last Line							
 generate_numbers([RowSums], 0, _, RevRowSums):- 	reverse(RevRowSums, RowSums).
 generate_numbers([H|T], LineSize, ColSize, Sums):-	generate_num_row(H, ColSize, 0, Sum),
 													DecLineSize is LineSize - 1,
 													generate_numbers(T, DecLineSize, ColSize, [Sum|Sums]).
+
+% Generates random numbers for a certain line
+
+% +Line:	Line to be generated
+% +ColSize: Number of elements in line
+% +CurrCol: Current column
+% -Sum:     Sum of all elements
 generate_num_row([], 0, Sum, Sum).
 generate_num_row([H|T], ColSize, Acc, Sum):-	random(0, 10, H),
 												DecColSize is ColSize - 1,
 												NewAcc is Acc + H,
 												generate_num_row(T, DecColSize, NewAcc, Sum).
 
+% Generates elements for the new puzzle
+
+% +PuzzleNums:	Puzzle with numbers generated
+% -PuzzleInfo:	Generated puzzle
+% +PuzzleNums:	Puzzle with numbers generated
+% +LineSize:	Number of lines
+% +ColSize:     Number of columns												
 generate_elements([RowSums], [RowSums], _, 0, _).
 generate_elements([N|NS], [E|ES], PuzzleNums, LineSize, ColSize):- 	generate_row_elements(N, E, PuzzleNums, LineSize, ColSize), !,
 																	DecLineSize is LineSize - 1,
 																	generate_elements(NS, ES, PuzzleNums, DecLineSize, ColSize).
-									
+
+% Generates line elements for the new puzzle
+
+% +PuzzleNums:	Puzzle with numbers generated
+% -PuzzleInfo:	Generated puzzle
+% +PuzzleNums:	Puzzle with numbers generated
+% +LineSize:	Number of lines
+% +ColSize:     Number of columns																	
 generate_row_elements([], [], _, _, 0).
 generate_row_elements([N|NS], [E|ES], PuzzleNums, LineSize, ColSize):- 	generate_element(N, E, PuzzleNums, LineSize, ColSize), !,
 																		DecColSize is ColSize - 1,
 																		generate_row_elements(NS, ES, PuzzleNums, LineSize, DecColSize).
 																		
-% Diamond Element
+% Generates Diamond Element
+
+% -N:			New value
+% +Type:		Element type
+% +PuzzleNums:	Puzzle with numbers generated 
+% +L:			Number of lines
+% +C:   		Number of columns	
 generate_element(N, 3, PuzzleNums, L, C):- 	member(N, [1, 3, 5, 7, 9]),
 											length(PuzzleNums, IncLS),
 											LI is IncLS - L,
@@ -257,34 +299,77 @@ generate_element(N, 3, PuzzleNums, L, C):- 	member(N, [1, 3, 5, 7, 9]),
 											sublist(Line, LeftNums, 0, _, C),
 											sumlist(LeftNums, N).
 											
-% Star Element
+% Generates Star Element
+
+% -N:			New value
+% +Type:		Element type
+% +PuzzleNums:	Puzzle with numbers generated 
+% +L:			Number of lines
+% +C:   		Number of columns	
 generate_element(N, 1, PuzzleNums, L, C):- 	member(N, [2, 3, 5, 7]),
 											PuzzleNums = [Line | Rest], length(Rest, LS), length(Line, CS),
 											star_validate(PuzzleNums, L, C, LS, CS, 0).
 											
-% Chess Element
+% Generates Chess Element
+
+% -N:			New value
+% +Type:		Element type
+% +PuzzleNums:	Puzzle with numbers generated 
+% +L:			Number of lines
+% +C:   		Number of columns	
 generate_element(N, 6, PuzzleNums, L, C):- 	PuzzleNums = [Line | Rest], length(Rest, LS), length(Line, CS),
 											chess_validate(N, PuzzleNums, L, C, LS, CS, 0, 0).
 
-% Square Element
+% Generates Square Element
+
+% -N:			New value
+% +Type:		Element type
+% +PuzzleNums:	Puzzle with numbers generated 
+% +L:			Number of lines
+% +C:   		Number of columns	
 generate_element(N, 2, PuzzleNums, L, C):- 	member(N, [0, 5]),
 											PuzzleNums = [Line | Rest], length(Rest, LS), length(Line, CS),
 											square_validate(N, PuzzleNums, L, C, LS, CS, 0).	
 																			
-% Triangle Element
+% Generates Triangle Element
+
+% -N:			New value
+% +Type:		Element type
+% +PuzzleNums:	Puzzle with numbers generated 
+% +L:			Number of lines
+% +C:   		Number of columns	
 generate_element(N, 4, PuzzleNums, L, C):- 	N > 0,
 											PuzzleNums = [Line | Rest], length(Rest, LS), length(Line, CS),
 											get_num_by_direction(Above, PuzzleNums, L, C, -1, 0, LS, CS),
 											0 =:= Above mod 2,
 											N < Above.	
 											
-% Circle Element
+% Generates Circle Element
+
+% -N:			New value
+% +Type:		Element type
+% +PuzzleNums:	Puzzle with numbers generated 
+% +L:			Number of lines
+% +C:   		Number of columns	
 generate_element(1, 5, _, _, _).
 											
-% No Element											
+% Generates No Element				
+
+% -N:			New value
+% +Type:		Element type
+% +PuzzleNums:	Puzzle with numbers generated 
+% +L:			Number of lines
+% +C:   		Number of columns								
 generate_element(_, 0, _, _, _).											
 											
-% Neighbor Validations
+% Star validation
+
+% +PuzzleNums:	Puzzle with numbers generated 
+% +L:			Number of lines
+% +C:   		Number of columns	
+% +LS:			Line size
+% +CS:			Column size
+% +Dir:			Direction
 star_validate(PuzzleNums, L, C, LS, CS, Dir):-	neighbor(Dir, LI, CI),
 												get_num_by_direction(Number, PuzzleNums, L, C, LI, CI, LS, CS),
 												!,
@@ -295,7 +380,17 @@ star_validate(_, _, _, _, _, 4):- !.
 star_validate(PuzzleNums, L, C, LS, CS, Dir):-	!, Dir < 3,
 												NewDir is Dir + 1,
 												star_validate(PuzzleNums, L, C, LS, CS, NewDir).
+
+% Chess knight validation
 												
+% -N:			New value
+% +PuzzleNums:	Puzzle with numbers generated 
+% +L:			Number of lines
+% +C:   		Number of columns	
+% +LS:			Line size
+% +CS:			Column size
+% +Dir:			Direction
+% +Sum:			Total sum													
 chess_validate(N, PuzzleNums, L, C, LS, CS, Dir, Sum):-	attack_range(Dir, LI, CI),
 														get_num_by_direction(Number, PuzzleNums, L, C, LI, CI, LS, CS),
 														member(Number, [0, 2, 4, 6, 8]),
@@ -308,6 +403,15 @@ chess_validate(N, PuzzleNums, L, C, LS, CS, Dir, Sum):-	!, Dir < 7,
 														NewDir is Dir + 1,
 														chess_validate(N, PuzzleNums, L, C, LS, CS, NewDir, Sum).
 
+% Square knight validation
+												
+% -N:			New value
+% +PuzzleNums:	Puzzle with numbers generated 
+% +L:			Number of lines
+% +C:   		Number of columns	
+% +LS:			Line size
+% +CS:			Column size
+% +Dir:			Direction													
 square_validate(N, PuzzleNums, L, C, LS, CS, Dir):-	neighbor(Dir, LI, CI),
 													get_num_by_direction(Number, PuzzleNums, L, C, LI, CI, LS, CS),
 													!,
@@ -322,9 +426,9 @@ square_validate(N, PuzzleNums, L, C, LS, CS, Dir):-	!, Dir < 3,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Puzzle Solution %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% API: solve_puzzle/2, solve_puzzle/1
+% API: solve_puzzle/2, solve_gen_puzzle/2, solve/5
 
-% Solves a certain puzzle
+% Solves a certain puzzle with specific ID
 
 % +Options: Labeling options to optimize solution
 % +Puzzle:  Puzzle to be solved
@@ -342,14 +446,20 @@ solve_puzzle(Options, PuzzleID):- 	display_puzzle_info,
 % Solves a certain puzzle dynamically generated
 
 % +Options:  Labeling options to optimize solution
-% +LineSize: Desired number of lines for the generated puzzle
-% +ColSize:  Desired number of columns for the generated puzzle
+% +Size: 	 Desired size for the generated puzzle
 solve_gen_puzzle(Options, Size):-	display_puzzle_info,
 									generate_puzzle(PuzzleInfo, Size), !,
-									
 									TmpLineSize is Size + 1,
 									solve(Options, PuzzleInfo, Size, Size, TmpLineSize).
 
+									
+% Solves a certain puzzle
+
+% +Options:		Labeling options to optimize solution
+% +PuzzleInfo:	Internal Representation of the puzzle (facts)
+% +LineSize:	Number of lines
+% +ColSize: 	Number of columns
+% +TmpLineSize:	Last line identifier							
 solve(Options, PuzzleInfo, LineSize, ColSize, TmpLineSize):- 	% ---- Variable puzzle generation - INIT ----					
 																build_variable_puzzle(LineSize, ColSize, Puzzle),
 																flatten(Puzzle, Vars),
@@ -392,8 +502,7 @@ solve(Options, PuzzleInfo, LineSize, ColSize, TmpLineSize):- 	% ---- Variable pu
 apply_puzzle_constraints(Options, Vars, Puzzle, PuzzleInfo, LineSize, ColSize, LastLine):- 	domain(Vars, 0, 9), !,
 																							apply_row_constraints(Puzzle, LineSize, LastLine, 0), !,
 																							apply_constraints(Puzzle, PuzzleInfo, 0, LineSize, ColSize), !,
-																							apply_circle_remaining_constraint(Puzzle, PuzzleInfo), !,
-																							write('Starting Labeling (Debug)'),
+																							apply_circle_remaining_constraint(Puzzle, PuzzleInfo), !,																					
 																							labeling(Options, Vars). % Labeling options are the default
 																		
 % Applies row row contraint by making sure that the sum of all elements in each row is equal to a certain value
