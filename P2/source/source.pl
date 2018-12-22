@@ -225,15 +225,16 @@ display_statistics:-	write('Statistics: '), nl,  nl,
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Puzzle Generation %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 generate_puzzle(PuzzleInfo, Size):-	generate_numbers(PuzzleNums, Size, Size, []), !,
+									display_puzzle(PuzzleNums, 'final'),
 									generate_elements(PuzzleNums, PuzzleInfo, PuzzleNums, Size, Size).
 
 									
-generate_numbers([RowSums], 0, _, RowSums).
+generate_numbers([RowSums], 0, _, RevRowSums):- reverse(RevRowSums, RowSums).
 generate_numbers([H|T], LineSize, ColSize, Sums):-	generate_num_row(H, ColSize, 0, Sum),
 													DecLineSize is LineSize - 1,
 													generate_numbers(T, DecLineSize, ColSize, [Sum|Sums]).
 generate_num_row([], 0, Sum, Sum).
-generate_num_row([H|T], ColSize, Acc, Sum):-	random(0, 9, H),
+generate_num_row([H|T], ColSize, Acc, Sum):-	random(0, 10, H),
 												DecColSize is ColSize - 1,
 												NewAcc is Acc + H,
 												generate_num_row(T, DecColSize, NewAcc, Sum).
@@ -247,15 +248,15 @@ generate_row_elements([], [], _, _, 0).
 generate_row_elements([N|NS], [E|ES], PuzzleNums, LineSize, ColSize):- 	generate_element(N, E, PuzzleNums, LineSize, ColSize), !,
 																		DecColSize is ColSize - 1,
 																		generate_row_elements(NS, ES, PuzzleNums, LineSize, DecColSize).
-
+																		
 % Diamond Element
-generate_element(N, 3, PuzzleNums, L, C):- 	0 =:= N mod 2,
+generate_element(N, 3, PuzzleNums, L, C):- 	member(N, [1, 3, 5, 7, 9]),
 											length(PuzzleNums, IncLS),
 											LI is IncLS - L,
 											nth1(LI, PuzzleNums, Line),
 											sublist(Line, LeftNums, 0, _, C),
 											sumlist(LeftNums, N).
-																		
+											
 % Star Element
 generate_element(N, 1, PuzzleNums, L, C):- 	member(N, [2, 3, 5, 7]),
 											PuzzleNums = [Line | Rest], length(Rest, LS), length(Line, CS),
@@ -264,17 +265,25 @@ generate_element(N, 1, PuzzleNums, L, C):- 	member(N, [2, 3, 5, 7]),
 % Chess Element
 generate_element(N, 6, PuzzleNums, L, C):- 	PuzzleNums = [Line | Rest], length(Rest, LS), length(Line, CS),
 											chess_validate(N, PuzzleNums, L, C, LS, CS, 0, 0).
-											
+
+% Square Element
+generate_element(N, 2, PuzzleNums, L, C):- 	member(N, [0, 5]),
+											PuzzleNums = [Line | Rest], length(Rest, LS), length(Line, CS),
+											square_validate(N, PuzzleNums, L, C, LS, CS, 0).	
+																			
 % Triangle Element
 generate_element(N, 4, PuzzleNums, L, C):- 	N > 0,
 											PuzzleNums = [Line | Rest], length(Rest, LS), length(Line, CS),
 											get_num_by_direction(Above, PuzzleNums, L, C, -1, 0, LS, CS),
 											0 =:= Above mod 2,
-											N < Above.											
+											N < Above.	
+											
+% Circle Element
+generate_element(1, 5, _, _, _).
 											
 % No Element											
-generate_element(_, 0, _, _, _).
-
+generate_element(_, 0, _, _, _).											
+											
 % Neighbor Validations
 star_validate(PuzzleNums, L, C, LS, CS, Dir):-	neighbor(Dir, LI, CI),
 												get_num_by_direction(Number, PuzzleNums, L, C, LI, CI, LS, CS),
@@ -289,15 +298,27 @@ star_validate(PuzzleNums, L, C, LS, CS, Dir):-	!, Dir < 3,
 												
 chess_validate(N, PuzzleNums, L, C, LS, CS, Dir, Sum):-	write(Dir), attack_range(Dir, LI, CI),
 														get_num_by_direction(Number, PuzzleNums, L, C, LI, CI, LS, CS),
+														member(Number, [0, 2, 4, 6, 8]),
 														!,
-														NewSum is Sum + (Number mod 1),
+														IncSum is Sum + 1,
 														NewDir is Dir + 1,
-														chess_validate(N, PuzzleNums, L, C, LS, CS, NewDir, NewSum).
+														chess_validate(N, PuzzleNums, L, C, LS, CS, NewDir, IncSum).
 chess_validate(N, _, _, _, _, _, 8, N):- !.
 chess_validate(N, PuzzleNums, L, C, LS, CS, Dir, Sum):-	!, Dir < 7,
 														NewDir is Dir + 1,
-														chess_validate(N, PuzzleNums, L, C, LS, CS, NewDir, Sum).														
+														chess_validate(N, PuzzleNums, L, C, LS, CS, NewDir, Sum).
 
+square_validate(N, PuzzleNums, L, C, LS, CS, Dir):-	neighbor(Dir, LI, CI),
+													get_num_by_direction(Number, PuzzleNums, L, C, LI, CI, LS, CS),
+													!,
+													N \= Number,
+													NewDir is Dir + 1,
+													square_validate(N, PuzzleNums, L, C, LS, CS, NewDir).
+square_validate(_, _, _, _, _, _, 4):- !.												
+square_validate(N, PuzzleNums, L, C, LS, CS, Dir):-	!, Dir < 3,
+													NewDir is Dir + 1,
+													square_validate(N, PuzzleNums, L, C, LS, CS, NewDir).														
+											
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Puzzle Solution %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
